@@ -6,6 +6,7 @@ use App\Libraries\EmailService;
 use App\Models\LocationModel;
 use App\Models\UserModel;
 use App\Models\RoleModel;
+use Config\Services;
 
 //使用者管理
 class UserController extends BaseApiController
@@ -13,19 +14,21 @@ class UserController extends BaseApiController
     protected $userModel;
     protected $roleModel;
     protected $locationModel;
+    protected $authService;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->roleModel = new RoleModel();
         $this->locationModel = new LocationModel();
+        $this->authService=Services::auth();
     }
 
     // 取得角色選單
     public function getOptions()
     {
         try {
-            $currentUser = $this->request->user;
+            $currentUser = $this->authService->getUser();
             $roleOptions = $currentUser->role === 1 ? [
                 ['value' => 1, 'label' => '總管理者'],
                 ['value' => 2, 'label' => '據點帳號']
@@ -47,7 +50,9 @@ class UserController extends BaseApiController
             $account = $this->request->getVar('email');
             $exist = $this->userModel->isAccountExist($account);
 
-            return $this->successResponse('檢查帳號重複', [
+            $message=$exist?"帳號重複":"帳號可用";
+
+            return $this->successResponse($message, [
                 'isExist' => $exist
             ]);
         } catch (\Exception $e) {
@@ -64,11 +69,10 @@ class UserController extends BaseApiController
                 'u_Account' => $this->request->getVar('email'),
                 'u_Password' => $this->request->getVar('password'),
                 'u_Name' => $this->request->getVar('name'),
-                'u_r_Id' => $this->request->getVar('roleId'),
                 'u_l_Id' => $this->request->getVar('locationId'),
-                'u_Phone'=> $this->request->getVar('phone'),
-                'u_PostalCode'=>$this->request->getVar('postalCode'),
-                'u_Address'=>$this->request->getVar('address')
+                'u_Phone' => $this->request->getVar('phone'),
+                'u_PostalCode' => $this->request->getVar('postalCode'),
+                'u_Address' => $this->request->getVar('address')
             ];
 
             $roleId = $this->request->getVar('roleId');
@@ -78,7 +82,7 @@ class UserController extends BaseApiController
             } else {
                 $data['u_r_Id'] = 4;
             }
-            
+
             $userId = $this->userModel->insert($data);
 
             if (!$userId) {
@@ -112,9 +116,9 @@ class UserController extends BaseApiController
                 'u_Name' => $this->request->getVar('name'),
                 'u_r_Id' => $this->request->getVar('roleId'),
                 'u_l_Id' => $this->request->getVar('locationId'),
-                'u_Phone'=> $this->request->getVar('phone'),
-                'u_PostalCode'=>$this->request->getVar('postalCode'),
-                'u_Address'=>$this->request->getVar('address')
+                'u_Phone' => $this->request->getVar('phone'),
+                'u_PostalCode' => $this->request->getVar('postalCode'),
+                'u_Address' => $this->request->getVar('address')
             ];
 
             if (!$this->userModel->update($id, $data)) {
@@ -142,10 +146,10 @@ class UserController extends BaseApiController
                 'name' => $user['u_Name'],
                 'roleId' => $user['u_r_Id'],
                 'locationId' => $user['u_l_Id'],
-                'email'=>$user['u_Account'],
-                'phone'=>$user['u_Phone'],
-                'postalCode'=>$user['u_PostalCode'],
-                'address'=>$user['u_Address']
+                'email' => $user['u_Account'],
+                'phone' => $user['u_Phone'],
+                'postalCode' => $user['u_PostalCode'],
+                'address' => $user['u_Address']
             ];
 
             return $this->successResponse('', $data);
@@ -243,6 +247,91 @@ class UserController extends BaseApiController
             return $this->successResponse('', $data);
         } catch (\Exception $e) {
             return $this->errorResponse('取得使用者列表時發生錯誤', $e->getMessage());
+        }
+    }
+
+    // 取得個人資料
+    public function getProfile()
+    {
+        try {
+            $currentUser = $this->authService->getUser();
+            $user = $this->userModel->find($currentUser->id);
+
+            if (!$user) {
+                return $this->errorResponse('無法取得個人資料');
+            }
+
+            $data = [
+                'name' => $user['u_Name'],
+                'phone' => $user['u_Phone'],
+                'postalCode' => $user['u_PostalCode'],
+                'address' => $user['u_Address'],
+                'locationId' => $user['u_l_Id']
+            ];
+
+            return $this->successResponse('', $data);
+        } catch (\Exception $e) {
+            return $this->errorResponse('取得個人資料時發生錯誤', $e);
+        }
+    }
+
+    // 修改個人資料
+    public function editProfile()
+    {
+        try {
+            $currentUser = $this->authService->getUser();
+
+            $data = [
+                'u_Name' => $this->request->getVar('name'),
+                'u_Phone' => $this->request->getVar('phone'),
+                'u_PostalCode' => $this->request->getVar('postalCode'),
+                'u_Address' => $this->request->getVar('address'),
+                'u_l_Id' => $this->request->getVar('locationId'),
+            ];
+
+            $this->userModel->update($currentUser->id, $data);
+
+            return $this->successResponse('更新成功');
+        } catch (\Exception $e) {
+            return $this->errorResponse('更新個人資料時發生錯誤', $e);
+        }
+    }
+
+    // 更改密碼
+    public function changePassword()
+    {
+        try {
+            // 取得請求
+            $oldPassword = $this->request->getVar('oldPassword');
+            $newPassword = $this->request->getVar('newPassword');
+
+            // 取得用戶資料
+            $currentUser=$this->authService->getUser();
+            $user = $this->userModel->find($currentUser->id);
+
+            if (!$user) {
+                return $this->errorResponse('找不到用戶資料');
+            }
+
+            // 驗證舊密碼
+            if (!$this->userModel->verifyPassword($oldPassword, $user['u_Password'])) {
+                return $this->errorResponse('舊密碼不正確');
+            }
+
+            // 確保新密碼與舊密碼不同
+            if ($oldPassword === $newPassword) {
+                return $this->errorResponse('新密碼不能與舊密碼相同');
+            }
+
+            $data = [
+                'u_Password' => password_hash($newPassword, PASSWORD_BCRYPT)
+            ];
+
+            $this->userModel->update($currentUser->id, $data);
+
+            return $this->successResponse('修改成功');
+        } catch (\Exception $e) {
+            return $this->errorResponse('更改密碼時發生錯誤', $e->getMessage());
         }
     }
 }

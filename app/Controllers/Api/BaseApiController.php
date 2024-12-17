@@ -18,7 +18,7 @@ class BaseApiController extends ResourceController
      * @param mixed $data
      * @return void
      */
-    protected function successResponse(string $message, $data = null)
+    protected function successResponse(string $message='Success', $data = null)
     {
         return $this->respond(
             ApiResponse::success($message, $data)

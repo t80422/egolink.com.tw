@@ -11,10 +11,12 @@ use Config\Services;
 class AuthFilter implements FilterInterface
 {
     protected $jwtService;
+    protected $authService;
 
     public function __construct()
     {
         $this->jwtService = new JWTService();
+        $this->authService=Services::auth();
     }
 
     public function before(RequestInterface $request, $arguments = null)
@@ -26,6 +28,7 @@ class AuthFilter implements FilterInterface
                 ->setStatusCode(401)
                 ->setJSON([
                     'status' => false,
+                    'code'=>'NO_TOKEN',
                     'message' => '未提供驗證令牌',
                     'data' => null
                 ]);
@@ -50,7 +53,7 @@ class AuthFilter implements FilterInterface
             $user = $this->jwtService->validateToken($token);
 
             // 將用戶信息添加到請求對象中，這樣控制器就能使用它
-            $request->user = $user;
+            $this->authService->setUser($user);
 
             return $request;
         } catch (\Exception $e) {

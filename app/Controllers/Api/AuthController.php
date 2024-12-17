@@ -21,7 +21,7 @@ class AuthController extends BaseApiController
     }
 
     // 登入
-    public function loginAdmin()
+    public function login()
     {
         try {
             $account = $this->request->getVar('email');
@@ -35,7 +35,7 @@ class AuthController extends BaseApiController
 
             // 檢查帳號是否已驗證
             if (!$user['u_Verified']) {
-                return $this->errorResponse('帳號尚未驗證');
+                return $this->errorResponse('信箱尚未驗證,請重新申請驗證信');
             }
 
             // 生成 JWT Token
@@ -63,7 +63,7 @@ class AuthController extends BaseApiController
             $user = $this->userModel->getByEmailToken($token);
 
             if (!$user) {
-                return $this->errorResponse('無效或已過期的驗證連結');
+                return $this->errorResponse('無效或已過期的驗證連結,請重新申請驗證信');
             }
 
             // 更新使用者狀態
@@ -93,6 +93,7 @@ class AuthController extends BaseApiController
             if (!$user) {
                 return $this->errorResponse('找不到未驗證帳號');
             }
+
             // 更新驗證資訊
             $verifyData = $this->userModel->generateNewVerification();
             $this->userModel->update($user['u_Id'], $verifyData);

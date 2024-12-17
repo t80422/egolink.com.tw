@@ -18,6 +18,7 @@ class LocationController extends BaseApiController
         $this->uploadSer = new uploadService;
     }
 
+    // 列表
     public function index()
     {
         try {
@@ -44,6 +45,7 @@ class LocationController extends BaseApiController
         }
     }
 
+    // 新增
     public function create()
     {
         try {
@@ -68,6 +70,7 @@ class LocationController extends BaseApiController
         }
     }
 
+    // 詳細
     public function detail($id = null)
     {
         try {
@@ -96,6 +99,7 @@ class LocationController extends BaseApiController
         }
     }
 
+    // 修改
     public function edit($id = null)
     {
         try {
@@ -130,6 +134,7 @@ class LocationController extends BaseApiController
         }
     }
 
+    // 刪除
     public function delete($id = null)
     {
         try {
@@ -155,6 +160,7 @@ class LocationController extends BaseApiController
         }
     }
 
+    // 據點選單
     public function getOptions()
     {
         try {

@@ -2,7 +2,9 @@
 
 namespace Config;
 
+use App\HTTP\CustomRequest;
 use CodeIgniter\Config\BaseService;
+use CodeIgniter\HTTP\URI;
 
 /**
  * Services Configuration file.
@@ -19,4 +21,11 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function auth($getShared=true){
+        if($getShared){
+            return static::getSharedInstance('auth');
+        }
+
+        return new \App\Libraries\AuthService();
+    }
 }
