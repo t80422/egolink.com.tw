@@ -46,6 +46,17 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->post('edit', 'UserController::editProfile');
             $routes->post('change-password', 'UserController::changePassword');
         });
+
+        // 股東會資訊
+        $routes->group('stockholderGifts', static function ($routes) {
+            $routes->get('/', 'StockholderGiftsController::index');
+            $routes->get('options', 'StockholderGiftsController::getOptions');
+            $routes->post('/', 'StockholderGiftsController::create');
+            $routes->put('(:num)', 'StockholderGiftsController::edit/$1');
+            $routes->get('(:num)', 'StockholderGiftsController::detail/$1');
+            $routes->delete('(:num)','StockholderGiftsController::delete/$1');
+            $routes->get('history/(:segment)','StockholderGiftsController::getHistoricalGifts/$1');
+        });
     });
 
     // 公開的檢查功能

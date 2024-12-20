@@ -13,6 +13,11 @@ class ApiResponse
      */
     public static function success(string $message = 'Success', $data = null): array
     {
+        if($message==='')
+        {
+            $message='Success';
+        }
+        
         return [
             'status' => true,
             'message' => $message,
