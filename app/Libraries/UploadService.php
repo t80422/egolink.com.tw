@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Libraries;
 
 use Exception;
@@ -29,7 +27,7 @@ class UploadService
 
     public function deleteFile(string $fileName, string $directory)
     {
-        $fullPath = FCPATH . 'upload\\' . $directory . '\\' . $fileName;
+        $fullPath = FCPATH . 'upload/' . $directory . '/' . $fileName;
 
         if (file_exists($fullPath)) {
             unlink($fullPath);

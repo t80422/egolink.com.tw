@@ -51,11 +51,21 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('stockholderGifts', static function ($routes) {
             $routes->get('/', 'StockholderGiftsController::index');
             $routes->get('options', 'StockholderGiftsController::getOptions');
+            $routes->get('(:num)', 'StockholderGiftsController::detail/$1');
+            $routes->get('history/(:segment)', 'StockholderGiftsController::getHistoricalGifts/$1');
             $routes->post('/', 'StockholderGiftsController::create');
             $routes->put('(:num)', 'StockholderGiftsController::edit/$1');
-            $routes->get('(:num)', 'StockholderGiftsController::detail/$1');
-            $routes->delete('(:num)','StockholderGiftsController::delete/$1');
-            $routes->get('history/(:segment)','StockholderGiftsController::getHistoricalGifts/$1');
+            $routes->delete('(:num)', 'StockholderGiftsController::delete/$1');
+        });
+
+        // 子帳號
+        $routes->group('subAccount', static function ($routes) {
+            $routes->get('/', 'SubAccountController::index');
+            $routes->get('(:num)', 'SubAccountController::detail/$1');
+            $routes->post('/', 'SubAccountController::create');
+            $routes->post('upload/(:num)', 'SubAccountController::upload/$1');
+            $routes->put('(:num)', 'SubAccountController::edit/$1');
+            $routes->delete('(:num)', 'SubAccountController::delete/$1');
         });
     });
 

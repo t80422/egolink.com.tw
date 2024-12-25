@@ -46,7 +46,8 @@ class AuthController extends BaseApiController
                 'user' => [
                     'id' => $user['u_Id'],
                     'name' => $user['u_Name'],
-                    'roleId' => $user['u_r_Id']
+                    'roleId' => $user['u_r_Id'],
+                    'email' => $user['u_Account']
                 ]
             ];
 

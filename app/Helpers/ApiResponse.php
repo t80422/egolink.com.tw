@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use Exception;
+
 class ApiResponse
 {
     /**
@@ -13,11 +15,10 @@ class ApiResponse
      */
     public static function success(string $message = 'Success', $data = null): array
     {
-        if($message==='')
-        {
-            $message='Success';
+        if ($message === '') {
+            $message = 'Success';
         }
-        
+
         return [
             'status' => true,
             'message' => $message,
@@ -28,21 +29,11 @@ class ApiResponse
     /**
      * 錯誤回應
      */
-    public static function error(string $message = 'Error', $errors = null, string $logContext = 'API Error'): array
+    public static function error(string $message = 'Error'): array
     {
-        if ($errors) {
-            log_message('error', '[{context}] {message} | Details: {errors}', [
-                'context' => $logContext,
-                'message' => $message,
-                'errors' => print_r($errors, true)
-            ]);
-        }
-
-        $response = [
+        return [
             'status' => false,
             'message' => $message
         ];
-
-        return $response;
     }
 }

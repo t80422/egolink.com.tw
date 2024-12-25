@@ -127,7 +127,7 @@ class UserController extends BaseApiController
 
             return $this->successResponse('更新成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('更新使用者時發生錯誤', $e->getMessage());
+            return $this->errorResponse('更新使用者時發生錯誤', $e);
         }
     }
 
@@ -154,7 +154,7 @@ class UserController extends BaseApiController
 
             return $this->successResponse('', $data);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得使用者詳細發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得使用者詳細發生錯誤', $e);
         }
     }
 
@@ -174,7 +174,7 @@ class UserController extends BaseApiController
 
             return $this->successResponse('刪除成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('刪除使用者時發生錯誤', $e->getMessage());
+            return $this->errorResponse('刪除使用者時發生錯誤', $e);
         }
     }
 
@@ -246,7 +246,7 @@ class UserController extends BaseApiController
 
             return $this->successResponse('', $data);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得使用者列表時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得使用者列表時發生錯誤', $e);
         }
     }
 
@@ -331,7 +331,7 @@ class UserController extends BaseApiController
 
             return $this->successResponse('修改成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('更改密碼時發生錯誤', $e->getMessage());
+            return $this->errorResponse('更改密碼時發生錯誤', $e);
         }
     }
 }

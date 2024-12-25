@@ -41,7 +41,7 @@ class LocationController extends BaseApiController
 
             return $this->successResponse('Success', $data);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得據點列表時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得據點列表時發生錯誤', $e);
         }
     }
 
@@ -66,7 +66,7 @@ class LocationController extends BaseApiController
 
             return $this->successResponse('新增成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('新增據點時發生錯誤', $e->getMessage());
+            return $this->errorResponse('新增據點時發生錯誤', $e);
         }
     }
 
@@ -95,7 +95,7 @@ class LocationController extends BaseApiController
 
             return $this->successResponse('Success', $data);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得據點詳細時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得據點詳細時發生錯誤', $e);
         }
     }
 
@@ -130,7 +130,7 @@ class LocationController extends BaseApiController
 
             return $this->successResponse('修改成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('修改據點時發生錯誤', $e->getMessage());
+            return $this->errorResponse('修改據點時發生錯誤', $e);
         }
     }
 
@@ -156,7 +156,7 @@ class LocationController extends BaseApiController
 
             return $this->successResponse('刪除成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('刪除據點時發生錯誤', $e->getMessage());
+            return $this->errorResponse('刪除據點時發生錯誤', $e);
         }
     }
 
@@ -174,7 +174,7 @@ class LocationController extends BaseApiController
 
             return $this->successResponse('Success', ['options' => $options]);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得據點選單時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得據點選單時發生錯誤', $e);
         }
     }
 

@@ -12,3 +12,6 @@ Thumbs.db
 
 # 編譯後的靜態資源
 public/
+
+# 前端
+.output/
