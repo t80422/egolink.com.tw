@@ -9,7 +9,7 @@ class UploadService
     public function uploadFile($file, string $directory, string $newName)
     {
         try {
-            $path = FCPATH . 'upload/' . $directory;
+            $path = FCPATH . 'uploads/' . $directory;
 
             // 確保目錄存在且可寫入
             if (!is_dir($path)) {
@@ -27,7 +27,7 @@ class UploadService
 
     public function deleteFile(string $fileName, string $directory)
     {
-        $fullPath = FCPATH . 'upload/' . $directory . '/' . $fileName;
+        $fullPath = FCPATH . 'uploads/' . $directory . '/' . $fileName;
 
         if (file_exists($fullPath)) {
             unlink($fullPath);

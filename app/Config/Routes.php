@@ -49,10 +49,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
 
         // 股東會資訊
         $routes->group('stockholderGifts', static function ($routes) {
-            $routes->get('/', 'StockholderGiftsController::index');
-            $routes->get('options', 'StockholderGiftsController::getOptions');
             $routes->get('(:num)', 'StockholderGiftsController::detail/$1');
-            $routes->get('history/(:segment)', 'StockholderGiftsController::getHistoricalGifts/$1');
             $routes->post('/', 'StockholderGiftsController::create');
             $routes->put('(:num)', 'StockholderGiftsController::edit/$1');
             $routes->delete('(:num)', 'StockholderGiftsController::delete/$1');
@@ -67,8 +64,20 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->put('(:num)', 'SubAccountController::edit/$1');
             $routes->delete('(:num)', 'SubAccountController::delete/$1');
         });
+
+        // 委託
+        $routes->group('orders', static function ($routes) {
+            $routes->get('/', 'OrderController::index');
+            $routes->get('detail', 'OrderController::detail');
+            $routes->post('batch', 'OrderController::batchCreate');
+            $routes->put('(:num)', 'OrderController::edit/$1');
+            $routes->delete('(:num)', 'OrderController::delete/$1');
+        });
     });
 
-    // 公開的檢查功能
+    // 公開路由
     $routes->get('check-account', 'UserController::checkAccount');
+    $routes->get('stockholder-gifts', 'StockholderGiftsController::index');
+    $routes->get('history', 'StockholderGiftsController::getHistoricalGifts');
+    $routes->get('options', 'StockholderGiftsController::getOptions');
 });

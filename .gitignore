@@ -1,6 +1,7 @@
 # 忽略所有日誌檔案
 *.log
 debugbar/
+
 # 忽略 VS Code 設定資料夾
 .vscode/
 
@@ -15,3 +16,5 @@ public/
 
 # 前端
 .output/
+
+uploads/

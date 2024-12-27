@@ -52,7 +52,7 @@ class StockholderGiftsController extends BaseApiController
 
             return $this->successResponse('', $result);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得列表時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得列表時發生錯誤', $e);
         }
     }
 
@@ -67,7 +67,7 @@ class StockholderGiftsController extends BaseApiController
 
             return $this->successResponse('', $options);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得選項時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得選項時發生錯誤', $e);
         }
     }
 
@@ -102,7 +102,7 @@ class StockholderGiftsController extends BaseApiController
         } catch (\Exception $e) {
             $this->sgModel->transRollback();
 
-            return $this->errorResponse('新增時發生錯誤', $e->getMessage());
+            return $this->errorResponse('新增時發生錯誤', $e);
         }
     }
 
@@ -120,7 +120,7 @@ class StockholderGiftsController extends BaseApiController
 
             return $this->successResponse('', $result);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得詳細時發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得詳細時發生錯誤', $e);
         }
     }
 
@@ -148,7 +148,7 @@ class StockholderGiftsController extends BaseApiController
 
             return $this->successResponse('修改成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('修改時發生錯誤', $e->getMessage());
+            return $this->errorResponse('修改時發生錯誤', $e);
         }
     }
 
@@ -164,14 +164,15 @@ class StockholderGiftsController extends BaseApiController
             $this->sgModel->delete($id);
             return $this->successResponse('刪除成功');
         } catch (\Exception $e) {
-            return $this->errorResponse('刪除時發生錯誤', $e->getMessage());
+            return $this->errorResponse('刪除時發生錯誤', $e);
         }
     }
 
     // 歷年發放
-    public function getHistoricalGifts($stockCode)
+    public function getHistoricalGifts()
     {
         try {
+            $stockCode = $this->request->getGet('stockCode');
             $datas = $this->sgModel->getHistoricalGifts($stockCode);
             $allIds = array_column($datas, 'sg_Id');
             $allCombinations = $this->docModel->getDocCombinsBySGIds($allIds);
@@ -180,6 +181,7 @@ class StockholderGiftsController extends BaseApiController
                     'meetingDate' => $item['sg_MeetingDate'],
                     'meetingType' => StockholderGiftsModel::CODE_TABLES['meetingType'][$item['sg_MeetingType']],
                     'giftName' => $item['p_Name'] ?? null,
+                    'giftImg'=>!empty($item['p_Image']) ? base_url('upload/gifts/' . $item['p_Image']) : null,
                     'documentCombinations' => $allCombinations[$item['sg_Id']] ?? []
                 ];
             }, $datas);
@@ -192,10 +194,10 @@ class StockholderGiftsController extends BaseApiController
 
             return $this->successResponse('', $result);
         } catch (\Exception $e) {
-            return $this->errorResponse('取得歷年發放發生錯誤', $e->getMessage());
+            return $this->errorResponse('取得歷年發放發生錯誤', $e);
         }
     }
-    
+
     private function getRequestData()
     {
         return [
@@ -243,7 +245,6 @@ class StockholderGiftsController extends BaseApiController
                 'marketType' => $codeTables['marketType'][$item['sg_MarketType']],
                 'serviceAgent' => $item['sg_ServiceAgent'],
                 'phone' => $item['sg_Phone'],
-                'year' => $item['sg_Year'],
                 'votingDateStart' => $item['sg_VotingDateStart'],
                 'votingDateEnd' => $item['sg_VotingDateEnd'],
                 'updateDate' => (new \DateTime($item['sg_UpdatedAt']))->format('Y-m-d'),
