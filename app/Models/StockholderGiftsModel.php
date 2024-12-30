@@ -153,7 +153,7 @@ class StockholderGiftsModel extends Model
             $builder->groupStart()
                 ->like('sg_StockName', $params['keyword'])
                 ->orlike('sg_StockCode', $params['keyword'])
-                ->orlike('sg_GiftName', $params['keyword'])
+                ->orlike('p_Name', $params['keyword'])
                 ->groupEnd();
         }
 
@@ -230,15 +230,20 @@ class StockholderGiftsModel extends Model
         $sortOrder = $params['sortOrder'] ?? 'DESC';
 
         switch ($sortField) {
+            case 'updateDate':
+                $builder->orderBy('sg_UpdatedAt', $sortOrder);
+                break;
             case 'meetingType':
-                $builder->orderBy('sg_MeetingType', $sortOrder)
-                    ->orderBy('sg_StockCode', 'ASC');
+                $builder->orderBy('sg_MeetingType', $sortOrder);
                 break;
             case 'stockCode':
                 $builder->orderBy('sg_StockCode', $sortOrder);
                 break;
             case 'stockName':
                 $builder->orderBy('sg_StockName', $sortOrder);
+                break;
+            case 'deadlineDate':
+                $builder->orderBy('sg_DeadlineDate', $sortOrder);
                 break;
             default:
                 $builder->orderBy($sortField, $sortOrder);

@@ -36,6 +36,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->post('(:num)', 'UserController::edit/$1');
             $routes->delete('(:num)', 'UserController::delete/$1');
         });
+
+        // 最新消息
+        $routes->group('news', static function ($routes) {
+            $routes->get('(:num)', 'NewsController::detail/$1');
+            $routes->post('/', 'NewsController::create');
+            $routes->put('(:num)', 'NewsController::edit/$1');
+            $routes->delete('(:num)', 'NewsController::delete/$1');
+        });
     });
 
     // 客戶端路由
@@ -76,8 +84,9 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
     });
 
     // 公開路由
-    $routes->get('check-account', 'UserController::checkAccount');
-    $routes->get('stockholder-gifts', 'StockholderGiftsController::index');
-    $routes->get('history', 'StockholderGiftsController::getHistoricalGifts');
-    $routes->get('options', 'StockholderGiftsController::getOptions');
+    $routes->get('check-account', 'UserController::checkAccount');  // 檢查帳號重複
+    $routes->get('stockholder-gifts', 'StockholderGiftsController::index'); // 股東會資訊列表
+    $routes->get('history', 'StockholderGiftsController::getHistoricalGifts'); // 歷年紀念品
+    $routes->get('options', 'StockholderGiftsController::getOptions'); // 股東會資訊搜尋選項
+    $routes->get('news', 'NewsController::index'); // 最新消息列表
 });
