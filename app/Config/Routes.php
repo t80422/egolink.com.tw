@@ -20,7 +20,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         // 據點管理
         $routes->group('locations', static function ($routes) {
             $routes->get('/', 'LocationController::index');
-            $routes->get('options', 'LocationController::getOptions');
             $routes->post('/', 'LocationController::create');
             $routes->get('(:num)', 'LocationController::detail/$1');
             $routes->post('(:num)', 'LocationController::edit/$1');
@@ -43,6 +42,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->post('/', 'NewsController::create');
             $routes->put('(:num)', 'NewsController::edit/$1');
             $routes->delete('(:num)', 'NewsController::delete/$1');
+        });
+
+        // 常見問題
+        $routes->group('qa', static function ($routes) {
+            $routes->get('(:num)', 'QAController::detail/$1');
+            $routes->post('/', 'QAController::create');
+            $routes->put('(:num)', 'QAController::edit/$1');
+            $routes->delete('(:num)', 'QAController::delete/$1');
         });
     });
 
@@ -89,4 +96,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
     $routes->get('history', 'StockholderGiftsController::getHistoricalGifts'); // 歷年紀念品
     $routes->get('options', 'StockholderGiftsController::getOptions'); // 股東會資訊搜尋選項
     $routes->get('news', 'NewsController::index'); // 最新消息列表
+    $routes->get('locationOptions', 'LocationController::getOptions'); // 營業據點選單
+    $routes->get('qa', 'QAController::index'); // 常見問題列表
 });

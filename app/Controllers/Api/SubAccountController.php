@@ -103,67 +103,68 @@ class SubAccountController extends BaseApiController
         }
     }
 
-    // 上傳圖檔
-    public function upload($id)
-    {
-        try {
-            $this->saModel->transStart();
+    // 20241231 不用上傳圖檔
+    // // 上傳圖檔
+    // public function upload($id)
+    // {
+    //     try {
+    //         $this->saModel->transStart();
 
-            $subAcc = $this->saModel->find($id);
+    //         $subAcc = $this->saModel->find($id);
 
-            if (!$subAcc) {
-                return $this->errorResponse('找不到指定子帳號');
-            }
+    //         if (!$subAcc) {
+    //             return $this->errorResponse('找不到指定子帳號');
+    //         }
 
-            $fieldMap = [
-                'idCardF' => 'sa_IdCardImg_F',
-                'idCardB' => 'sa_IdCardImg_B',
-                'drivingLicense' => 'sa_DLImg',
-                'healthCard' => 'sa_HICImg'
-            ];
+    //         $fieldMap = [
+    //             'idCardF' => 'sa_IdCardImg_F',
+    //             'idCardB' => 'sa_IdCardImg_B',
+    //             'drivingLicense' => 'sa_DLImg',
+    //             'healthCard' => 'sa_HICImg'
+    //         ];
 
-            // 取得上傳檔案
-            $files = [
-                'idCardF' => $this->request->getFile('idCardFImg'),
-                'idCardB' => $this->request->getFile('idCardBImg'),
-                'drivingLicense' => $this->request->getFile('drivingLicenseImg'),
-                'healthCard' => $this->request->getFile('healthCardImg')
-            ];
+    //         // 取得上傳檔案
+    //         $files = [
+    //             'idCardF' => $this->request->getFile('idCardFImg'),
+    //             'idCardB' => $this->request->getFile('idCardBImg'),
+    //             'drivingLicense' => $this->request->getFile('drivingLicenseImg'),
+    //             'healthCard' => $this->request->getFile('healthCardImg')
+    //         ];
 
-            $basePath = self::IMG_PATH . $id;
-            $updateData = [];
+    //         $basePath = self::IMG_PATH . $id;
+    //         $updateData = [];
 
-            foreach ($fieldMap as $type => $dbField) {
-                $file = $files[$type];
-                $hasOldFile = !empty($subAcc[$dbField]);
+    //         foreach ($fieldMap as $type => $dbField) {
+    //             $file = $files[$type];
+    //             $hasOldFile = !empty($subAcc[$dbField]);
 
-                // 如果有新檔案上傳
-                if ($file->isValid()) {
-                    if ($hasOldFile) {
-                        $this->uploadSer->deleteFile($subAcc[$dbField], $basePath);
-                    }
+    //             // 如果有新檔案上傳
+    //             if ($file->isValid()) {
+    //                 if ($hasOldFile) {
+    //                     $this->uploadSer->deleteFile($subAcc[$dbField], $basePath);
+    //                 }
 
-                    $newName = $type . '_' . uniqid() . '.' . $file->getExtension();
-                    $this->uploadSer->uploadFile($file, $basePath, $newName);
-                    $updateData[$dbField] = $newName;
-                } else if ($hasOldFile) {
-                    $this->uploadSer->deleteFile($subAcc[$dbField], $basePath);
-                    $updateData[$dbField] = null;
-                }
-            }
+    //                 $newName = $type . '_' . uniqid() . '.' . $file->getExtension();
+    //                 $this->uploadSer->uploadFile($file, $basePath, $newName);
+    //                 $updateData[$dbField] = $newName;
+    //             } else if ($hasOldFile) {
+    //                 $this->uploadSer->deleteFile($subAcc[$dbField], $basePath);
+    //                 $updateData[$dbField] = null;
+    //             }
+    //         }
 
-            if (!empty($updateData)) {
-                $this->saModel->update($id, $updateData);
-            }
+    //         if (!empty($updateData)) {
+    //             $this->saModel->update($id, $updateData);
+    //         }
 
-            $this->saModel->transComplete();
+    //         $this->saModel->transComplete();
 
-            return $this->successResponse();
-        } catch (Exception $e) {
-            $this->saModel->transRollback();
-            return $this->errorResponse('上傳檔案時發生錯誤', $e);
-        }
-    }
+    //         return $this->successResponse();
+    //     } catch (Exception $e) {
+    //         $this->saModel->transRollback();
+    //         return $this->errorResponse('上傳檔案時發生錯誤', $e);
+    //     }
+    // }
 
     // 刪除
     public function delete($id = null)
@@ -250,10 +251,11 @@ class SubAccountController extends BaseApiController
         ];
 
         if ($isIndex) {
-            $result['idCardFrontImg'] = !empty($data['sa_IdCardImg_F']);
-            $result['idCardBackImg'] = !empty($data['sa_IdCardImg_B']);
-            $result['drivingLicenseImg'] = !empty($data['sa_DLImg']);
-            $result['healthCardImg'] = !empty($data['sa_HICImg']);
+            // 20241231 不用上傳圖檔
+            // $result['idCardFrontImg'] = !empty($data['sa_IdCardImg_F']);
+            // $result['idCardBackImg'] = !empty($data['sa_IdCardImg_B']);
+            // $result['drivingLicenseImg'] = !empty($data['sa_DLImg']);
+            // $result['healthCardImg'] = !empty($data['sa_HICImg']);
             $result['idCard'] = (bool)$data['sa_IdCard'];
             $result['drivingLicense'] = (bool)$data['sa_DrivingLicense'];
             $result['healthCard'] = (bool)$data['sa_HIC'];
