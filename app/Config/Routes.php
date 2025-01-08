@@ -51,6 +51,15 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->put('(:num)', 'QAController::edit/$1');
             $routes->delete('(:num)', 'QAController::delete/$1');
         });
+
+        // 進貨作業
+        $routes->group('purchase', static function ($routes) {
+            $routes->get('/', 'PurchaseController::index');
+            $routes->get('(:num)', 'PurchaseController::detail/$1');
+            $routes->post('/', 'PurchaseController::create');
+            $routes->put('(:num)', 'PurchaseController::edit/$1');
+            $routes->delete('(:num)', 'PurchaseController::delete/$1');
+        });
     });
 
     // 客戶端路由
