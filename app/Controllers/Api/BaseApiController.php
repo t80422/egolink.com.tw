@@ -36,10 +36,14 @@ class BaseApiController extends ResourceController
     {
         if ($e) {
             $location = str_replace(ROOTPATH, '', $e->getFile()) . '(Line: ' . $e->getLine() . ')';
+            $errorMsg = $e->getMessage();
+
             log_message('error', '{message}' . PHP_EOL . 'Location: {location}', [
-                'message' => $e->getMessage(),
+                'message' => $errorMsg,
                 'location' => $location
             ]);
+
+            $message = $message . " : " .  $errorMsg;
         }
 
         return $this->respond(ApiResponse::error($message));

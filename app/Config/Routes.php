@@ -60,6 +60,16 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->put('(:num)', 'PurchaseController::edit/$1');
             $routes->delete('(:num)', 'PurchaseController::delete/$1');
         });
+
+        // 倉庫管理
+        $routes->group('product', static function ($routes) {
+            $routes->get('/', 'ProductController::index');
+            $routes->get('(:num)', 'ProductController::detail/$1');
+            $routes->get('inventory-logs', 'ProductController::inventoryLogs');
+            $routes->post('/', 'ProductController::create');
+            $routes->post('(:num)', 'ProductController::edit/$1');
+            $routes->delete('(:num)', 'ProductController::delete/$1');
+        });
     });
 
     // 客戶端路由

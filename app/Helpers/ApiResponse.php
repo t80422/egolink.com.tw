@@ -2,8 +2,6 @@
 
 namespace App\Helpers;
 
-use Exception;
-
 class ApiResponse
 {
     /**
