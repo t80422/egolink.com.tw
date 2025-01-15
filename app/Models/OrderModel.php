@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Entities\Order;
 use CodeIgniter\Model;
 use Exception;
 
@@ -9,23 +10,22 @@ class OrderModel extends Model
 {
     protected $table            = 'orders';
     protected $primaryKey       = 'o_Id';
+    protected $returnType       = Order::class;
     protected $allowedFields    = [
         'o_sg_Id',
         'o_sa_Id',
-        'o_StockShares',
         'o_Status',
         'o_AccountNum',
-        'o_Memo'
+        'o_Memo',
+        'o_s_Id',
+        'o_Date'
     ];
 
     public const STATUS = [
         0 => '缺件',
-        1 => '補件',
-        2 => '逾期',
-        3 => '收件',
-        4 => '待出貨',
-        5 => '出貨',
-        6 => '複領'
+        1 => '逾期',
+        2 => '待出貨',
+        3 => '出貨'
     ];
 
     /**
@@ -41,10 +41,12 @@ class OrderModel extends Model
 
         try {
             // 找出已存在的訂單組合
-            $exitOrders = $this->whereIn('o_sg_Id', $sgIds)
+            $exitOrders = $this->builder()
+                ->whereIn('o_sg_Id', $sgIds)
                 ->whereIn('o_sa_Id', $saIds)
                 ->select('o_sg_Id, o_sa_Id')
-                ->findAll();
+                ->get()
+                ->getResultArray();
 
             // 建立已存在組合的查找表,用於快速查詢
             $exitCombine = [];
@@ -65,7 +67,7 @@ class OrderModel extends Model
                         $batchData[] = [
                             'o_sg_Id' => $sgId,
                             'o_sa_Id' => $saId,
-                            'o_Status' => self::STATUS[0]
+                            'o_Status' => Order::STATUS_INCOMPLETE
                         ];
                     }
                 }
@@ -253,5 +255,66 @@ class OrderModel extends Model
             ->first();
 
         return $data['o_Memo'] ?? '';
+    }
+
+    /**
+     * 更新訂單為已出貨
+     *
+     * @param array $orderIds
+     * @param integer $shipmentId
+     * @return void
+     */
+    public function updatedToShipped(array $orderIds, int $shipmentId): bool
+    {
+        if (empty($orderIds)) {
+            throw new Exception('沒有可出貨的訂單');
+        }
+
+        return $this->whereIn('o_Id', $orderIds)
+            ->set([
+                'o_Status' => 3,
+                'o_s_Id' => $shipmentId
+            ])
+            ->update();
+    }
+
+    /**
+     * 取得指定用戶可出貨訂單
+     *
+     * @param integer $userId
+     * @return array 可出貨訂單ID陣列
+     */
+    public function getShippableOrderIdsByUserId(int $userId): array
+    {
+        if (!$userId) {
+            throw new Exception('未提供 UserId');
+        }
+
+        return $this->select('orders.o_Id')
+            ->join('sub_accounts sa', 'sa.sa_Id = orders.o_sa_Id')
+            ->where([
+                'sa.sa_u_Id' => $userId,
+                'orders.o_Status' => self::STATUS['2']
+            ])
+            ->where('orders.o_s_Id IS NULL')
+            ->orderBy('orders.o_Date', 'ASC')
+            ->findColumn('o_Id') ?? [];
+    }
+
+    /**
+     * 將取消出貨的委託轉回待出貨
+     *
+     * @param string $shipmentId 出貨編號
+     * @return void
+     */
+    public function backToPending($shipmentId)
+    {
+        if (empty($shipmentId)) {
+            throw new Exception('未提供 shipmentId');
+        }
+
+        $this->where('o_s_Id', $shipmentId)
+            ->set('o_Status', Order::STATUS_PENDING)
+            ->update();
     }
 }

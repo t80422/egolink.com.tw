@@ -2,11 +2,13 @@
 
 namespace App\Controllers\Api;
 
+use App\Entities\User;
 use App\Libraries\EmailService;
 use App\Models\LocationModel;
 use App\Models\UserModel;
 use App\Models\RoleModel;
 use Config\Services;
+use Exception;
 
 //使用者管理
 class UserController extends BaseApiController
@@ -21,7 +23,7 @@ class UserController extends BaseApiController
         $this->userModel = new UserModel();
         $this->roleModel = new RoleModel();
         $this->locationModel = new LocationModel();
-        $this->authService=Services::auth();
+        $this->authService = Services::auth();
     }
 
     // 取得角色選單
@@ -29,12 +31,14 @@ class UserController extends BaseApiController
     {
         try {
             $currentUser = $this->authService->getUser();
-            $roleOptions = $currentUser->role === 1 ? [
+            $roleOptions = $currentUser->role === "1" ? [
                 ['value' => 1, 'label' => '總管理者'],
-                ['value' => 2, 'label' => '據點帳號']
+                ['value' => 2, 'label' => '據點帳號'],
+                ['value' => 3, 'label' => '群組帳號']
             ] :
                 [
-                    ['value' => 2, 'label' => '據點帳號']
+                    ['value' => 2, 'label' => '據點帳號'],
+                    ['value' => 3, 'label' => '群組帳號']
                 ];
 
             return $this->successResponse('', $roleOptions);
@@ -50,7 +54,7 @@ class UserController extends BaseApiController
             $account = $this->request->getVar('email');
             $exist = $this->userModel->isAccountExist($account);
 
-            $message=$exist?"帳號重複":"帳號可用";
+            $message = $exist ? "帳號重複" : "帳號可用";
 
             return $this->successResponse($message, [
                 'isExist' => $exist
@@ -64,24 +68,19 @@ class UserController extends BaseApiController
     public function create()
     {
         try {
-            // 從請求中取得資料
-            $data = [
-                'u_Account' => $this->request->getVar('email'),
-                'u_Password' => $this->request->getVar('password'),
-                'u_Name' => $this->request->getVar('name'),
-                'u_l_Id' => $this->request->getVar('locationId'),
-                'u_Phone' => $this->request->getVar('phone'),
-                'u_PostalCode' => $this->request->getVar('postalCode'),
-                'u_Address' => $this->request->getVar('address')
-            ];
+            $data = new User([
+                'email' => $this->request->getVar('email'),
+                'password' => $this->request->getVar('password'),
+                'name' => $this->request->getVar('name'),
+                'locationId' => $this->request->getVar('locationId'),
+                'phone' => $this->request->getVar('phone'),
+                'postalCode' => $this->request->getVar('postalCode'),
+                'address' => $this->request->getVar('address'),
+                'parentId' => $this->request->getVar('groupId'),
+            ]);
 
             $roleId = $this->request->getVar('roleId');
-
-            if ($roleId !== null) {
-                $data['u_r_Id'] = $roleId;
-            } else {
-                $data['u_r_Id'] = 4;
-            }
+            $data->roleId = $roleId ?? UserModel::ROLE_NOMAL;
 
             $userId = $this->userModel->insert($data);
 
@@ -94,7 +93,7 @@ class UserController extends BaseApiController
 
             // 發送驗證郵件
             $emailService = new EmailService;
-            $emailService->sendVerificationEmail($user['u_Account'], $user['u_VerifyToken']);
+            $emailService->sendVerificationEmail($user->email, $user->verifyToken);
 
             return $this->successResponse('註冊成功,請檢查您的信箱進行驗證');
         } catch (\Exception $e) {
@@ -112,20 +111,17 @@ class UserController extends BaseApiController
                 return $this->errorResponse('找不到使用者');
             }
 
-            $data = [
-                'u_Name' => $this->request->getVar('name'),
-                'u_r_Id' => $this->request->getVar('roleId'),
-                'u_l_Id' => $this->request->getVar('locationId'),
-                'u_Phone' => $this->request->getVar('phone'),
-                'u_PostalCode' => $this->request->getVar('postalCode'),
-                'u_Address' => $this->request->getVar('address')
-            ];
+            $user->name = $this->request->getVar('name');
+            $user->roleId = $this->request->getVar('roleId');
+            $user->locationId = $this->request->getVar('locationId');
+            $user->phone = $this->request->getVar('phone');
+            $user->postalCode = $this->request->getVar('postalCode');
+            $user->address = $this->request->getVar('address');
+            $user->parentId = $this->request->getVar('groupId');
 
-            if (!$this->userModel->update($id, $data)) {
-                return $this->errorResponse('更新失敗');
-            }
+            $this->userModel->update($id, $user);
 
-            return $this->successResponse('更新成功');
+            return $this->successResponse();
         } catch (\Exception $e) {
             return $this->errorResponse('更新使用者時發生錯誤', $e);
         }
@@ -135,24 +131,13 @@ class UserController extends BaseApiController
     public function detail($id = null)
     {
         try {
-            $user = $this->userModel->find($id);
+            $user = $this->userModel->getDetail($id);
 
             if (!$user) {
                 return $this->errorResponse('找不到指定使用者');
             }
 
-            $data = [
-                'id' => $user['u_Id'],
-                'name' => $user['u_Name'],
-                'roleId' => $user['u_r_Id'],
-                'locationId' => $user['u_l_Id'],
-                'email' => $user['u_Account'],
-                'phone' => $user['u_Phone'],
-                'postalCode' => $user['u_PostalCode'],
-                'address' => $user['u_Address']
-            ];
-
-            return $this->successResponse('', $data);
+            return $this->successResponse('', $user->formatForDetail());
         } catch (\Exception $e) {
             return $this->errorResponse('取得使用者詳細發生錯誤', $e);
         }
@@ -182,69 +167,16 @@ class UserController extends BaseApiController
     public function index()
     {
         try {
-            // 取得分頁參數
-            $page = $this->request->getVar('page') ?? 1;
-            $limit = 10;
-            $offset = ($page - 1) * $limit;
-
-            // 取得篩選條件
-            $roleId = $this->request->getVar('roleId');
-            $locationId = $this->request->getVar('locationId');
-            $keyword = $this->request->getVar('keyword');
-
-            // 建立查詢
-            $builder = $this->userModel->select('
-                users.u_Id,
-                users.u_Account,
-                users.u_Name,
-                roles.r_Name as roleName,
-                locations.l_Name as locationName
-            ')
-                ->join('roles', 'roles.r_Id = users.u_r_Id')
-                ->join('locations', 'locations.l_Id = users.u_l_Id', 'left');
-
-            // 加入篩選條件
-            if (!empty($roleId)) {
-                $builder->where('users.u_r_Id', $roleId);
-            }
-
-            if (!empty($locationId)) {
-                $builder->where('users.u_l_Id', $locationId);
-            }
-
-            if (!empty($keyword)) {
-                $builder->groupStart()
-                    ->like('users.u_Name', $keyword)
-                    ->orLike('users.u_Account', $keyword)
-                    ->groupEnd();
-            }
-
-            // 計算總筆數
-            $total = $builder->countAllResults(false);
-
-            // 加入分頁並取得資料
-            $users = $builder->limit($limit, $offset)->find();
-
-            // 格式化資料
-            $items = array_map(function ($user) {
-                return [
-                    'id' => $user['u_Id'],
-                    'email' => $user['u_Account'],
-                    'name' => $user['u_Name'],
-                    'roleName' => $user['roleName'],
-                    'locationName' => $user['locationName'],
-                ];
-            }, $users);
-
-            // 回傳資料
-            $data = [
-                'items' => $items,
-                'total' => $total,
-                'page' => $page,
-                'totalPages' => ceil($total / $limit)
+            $params = [
+                'page' => $this->request->getVar('page'),
+                'roleId' => $this->request->getVar('roleId'),
+                'locationId' => $this->request->getVar('locationId'),
+                'keyword' => $this->request->getVar('keyword'),
             ];
 
-            return $this->successResponse('', $data);
+            $datas = $this->userModel->getList($params);
+
+            return $this->successResponse('', $datas);
         } catch (\Exception $e) {
             return $this->errorResponse('取得使用者列表時發生錯誤', $e);
         }
@@ -306,7 +238,7 @@ class UserController extends BaseApiController
             $newPassword = $this->request->getVar('newPassword');
 
             // 取得用戶資料
-            $currentUser=$this->authService->getUser();
+            $currentUser = $this->authService->getUser();
             $user = $this->userModel->find($currentUser->id);
 
             if (!$user) {
@@ -332,6 +264,27 @@ class UserController extends BaseApiController
             return $this->successResponse('修改成功');
         } catch (\Exception $e) {
             return $this->errorResponse('更改密碼時發生錯誤', $e);
+        }
+    }
+
+    // 取得群組帳號
+    public function getGroupAccountOptions()
+    {
+        try {
+            $locationId = $this->request->getVar('locationId');
+
+            if (!$locationId) {
+                return $this->errorResponse('未選擇據點編號');
+            }
+
+            $groups = $this->userModel->getGroupAccountOptionsByLocationId($locationId);
+            $options = array_map(function (User $group) {
+                return $group->formatForOption();
+            }, $groups);
+
+            return $this->successResponse('', $options);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得群組帳號時發生錯誤', $e);
         }
     }
 }

@@ -36,8 +36,8 @@ class JWTService
             'iat' => $issuedAt, // token 產生時間
             'exp' => $expire, // token 過期時間
             'user' => [
-                'id' => $userData['u_Id'],
-                'role' => $userData['u_r_Id']
+                'id' => $userData['id'],
+                'role' => $userData['roleId']
             ]
         ];
 

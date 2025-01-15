@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use App\Entities\User;
+use CodeIgniter\Database\BaseBuilder;
 
 class UserModel extends Model
 {
@@ -24,11 +26,19 @@ class UserModel extends Model
         'u_l_Id',
         'u_Phone',
         'u_PostalCode',
-        'u_Address'
+        'u_Address',
+        'u_ParentId'
     ];
 
     // 新增前動作
     protected $beforeInsert = ['hashPassword', 'generateVerifyToken'];  // 新增這一行在類別屬性中
+
+    protected $returnType = User::class;
+
+    public const ROLE_ADMIN = 1;
+    public const ROLE_LOCATION = 2;
+    public const ROLE_GROUP = 3;
+    public const ROLE_NOMAL = 4;
 
     /**
      * 雜湊密碼
@@ -91,13 +101,6 @@ class UserModel extends Model
         return password_verify($password, $hash);
     }
 
-    public function getUser($userId)
-    {
-        return $this->select('users.*,roles.r_Name')
-            ->join('roles', 'roles.r_Id=users.u_r_Id')
-            ->find($userId);
-    }
-
     public function getByEmailToken(string $token)
     {
         return $this->where('u_VerifyToken', $token)
@@ -112,43 +115,101 @@ class UserModel extends Model
             ->first();
     }
 
-    public function clearupVerificationTokens(): bool
-    {
-        // 開始交易
-        $this->db->transStart();
-
-        // 清理已過期的驗證碼
-        $this->where('u_VerifyExpires <', date('Y-m-d H:i:s'))
-            ->where('u_Verified', 0)
-            ->set([
-                'u_VerifyToken' => null,
-                'u_VerifyExpires' => null
-            ])
-            ->update();
-
-        // 清理已驗證用戶的驗證資訊
-        $this->where('u_Verified', 1)
-            ->set([
-                'u_VerifyToken' => null,
-                'u_VerifyExpires' => null
-            ])
-            ->update();
-
-        // 完成交易
-        $this->db->transComplete();
-
-        log_message('info', '驗證碼清理完成: {time}', [
-            'time' => date('Y-m-d H:i:s')
-        ]);
-
-        return $this->db->transStatus();
-    }
-
     public function getByAccount(string $account)
     {
         return $this->where('u_Account', $account)
             ->select('users.*,roles.r_Name')
             ->join('roles', 'roles.r_Id = users.u_r_Id')
             ->first();
+    }
+
+    public function getList(array $params = []): array
+    {
+        $builder = $this->createBaseBuilder();
+        $this->applyFilters($builder, $params);
+        $builder->orderBy('u_Name', 'ASC');
+
+        $total = $builder->countAllResults(false);
+        $page = $params['page'] ?? 1;
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $users = $builder->limit($limit, $offset)->get()->getResult($this->returnType);
+
+        return [
+            'page' => $page,
+            'totalPages' => ceil($total / $limit),
+            'total' => $total,
+            'items' => array_map(fn(User $user) => $user->formatForList(), $users)
+        ];
+    }
+
+    public function markEmailAsVerified($userId)
+    {
+        $this->update($userId, [
+            'u_Verified' => 1,
+            'u_VerifyToken' => null,
+            'u_VerifyExpires' => null
+        ]);
+    }
+
+    public function getGroupAccountOptionsByLocationId($locationId)
+    {
+        return $this->select('
+            u.*,
+            l.l_Name as locationName,
+        ')
+            ->from('users u')
+            ->join('locations l', 'l.l_Id = u.u_l_id')
+            ->where([
+                'u.u_l_Id' => $locationId,
+                'u.u_r_Id' => self::ROLE_GROUP,
+                'u.u_Verified' => 1
+            ])
+            ->orderBy('u.u_Name', 'ASC')
+            ->findAll();
+    }
+
+    public function getDetail($userId):?User
+    {
+        $builder = $this->createBaseBuilder();
+        return $builder->where('u.u_Id', $userId)
+            ->get()
+            ->getFirstRow($this->returnType);
+    }
+
+    private function createBaseBuilder(): BaseBuilder
+    {
+        return $this->builder('users u')
+            ->select('
+            u.*,
+            r.r_Name as roleName,
+            l.l_Name as locationName,
+            parent.u_Name as parentName
+        ')
+            ->join('roles r', 'r.r_Id = u.u_r_Id')
+            ->join('locations l', 'l.l_Id = u.u_l_Id', 'left')
+            ->join('users as parent', 'parent.u_Id = u.u_ParentId', 'left');
+    }
+
+    private function applyFilters(BaseBuilder $builder, array $params)
+    {
+        // 角色
+        if (!empty($params['roleId'])) {
+            $builder->where('u.u_r_Id', $params['roleId']);
+        }
+
+        // 據點
+        if (!empty($params['locationId'])) {
+            $builder->where('u.u_l_Id', $params['locationId']);
+        }
+
+        // 關鍵字
+        if (!empty($params['keyword'])) {
+            $builder->groupStart()
+                ->like('u.u_Name', $params['keyword'])
+                ->orLike('u.u_Phone', $params['keyword'])
+                ->groupEnd();
+        }
     }
 }

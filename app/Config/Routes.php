@@ -26,13 +26,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->delete('(:num)', 'LocationController::delete/$1');
         });
 
-        // 使用者管理
+        // 會員管理
         $routes->group('users', static function ($routes) {
             $routes->get('/', 'UserController::index');
             $routes->get('options', 'UserController::getOptions');
-            $routes->post('/', 'UserController::create');
             $routes->get('(:num)', 'UserController::detail/$1');
-            $routes->post('(:num)', 'UserController::edit/$1');
+            $routes->get('groupOptions', 'UserController::getGroupAccountOptions');
+            $routes->post('/', 'UserController::create');
+            $routes->put('(:num)', 'UserController::edit/$1');
             $routes->delete('(:num)', 'UserController::delete/$1');
         });
 
@@ -69,6 +70,15 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->post('/', 'ProductController::create');
             $routes->post('(:num)', 'ProductController::edit/$1');
             $routes->delete('(:num)', 'ProductController::delete/$1');
+        });
+
+        // 出貨作業
+        $routes->group('shipment', static function ($routes) {
+            $routes->get('/', 'ShipmentController::index');
+            $routes->get('(:num)', 'ShipmentController::detail');
+            $routes->post('/', 'ShipmentController::create');
+            $routes->put('(:num)', 'ShipmentController::edit/$1');
+            $routes->delete('(:num)', 'ShipmentController::delete/$1');
         });
     });
 
