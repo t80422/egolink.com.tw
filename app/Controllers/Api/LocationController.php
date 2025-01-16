@@ -31,7 +31,7 @@ class LocationController extends BaseApiController
                     'phone' => $location['l_Phone'],
                     'address' => $location['l_Address'],
                     'lineLink' => $location['l_LineLink'],
-                    'imgUrl' => $location['l_Image'] ? base_url('upload/' . $this->fileDir . '/' . $location['l_Image']) : null
+                    'imgUrl' => $location['l_Image'] ? base_url('uploads/' . $this->fileDir . '/' . $location['l_Image']) : null
                 ];
             }, $locations);
 

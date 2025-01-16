@@ -31,12 +31,16 @@ class PurchaseController extends BaseApiController
 
             $this->validateRequest($data);
 
+            if (empty($requestData['details']) || !is_array($requestData['details'])) {
+                throw new Exception('列表不能為空');
+            }
+
             $purchaseId = $this->purchaseModel->insert($data);
             $details = [];
 
             foreach ($requestData['details'] as $detail) {
                 $details[] = [
-                    'pd_p_Id' => $detail['product'],
+                    'pd_p_Id' => $detail['productId'],
                     'pd_pu_Id' => $purchaseId,
                     'pd_Qty' => $detail['qty']
                 ];
@@ -69,31 +73,10 @@ class PurchaseController extends BaseApiController
 
             // 格式化
             $formatItems = array_map(function ($item) {
-                $details = $item['details'];
-                $stocks = [];
-
-                foreach ($details as $detail) {
-                    $stockKey = $detail['sg_StockCode'] . '-' . $detail['sg_StockName'];
-
-                    if (!isset($stocks[$stockKey])) {
-                        $stocks[$stockKey] = [
-                            'code' => $detail['sg_StockCode'],
-                            'name' => $detail['sg_StockName'],
-                            'details' => []
-                        ];
-                    }
-
-                    $stocks[$stockKey]['details'][] = [
-                        'name' => $detail['p_Id'],
-                        'qty' => $detail['pd_Qty']
-                    ];
-                }
-
                 return [
                     'id' => $item['id'],
                     'date' => $item['date'],
-                    'memo' => $item['memo'],
-                    'details' => array_values($stocks)
+                    'memo' => $item['memo']
                 ];
             }, $datas['items']);
 
@@ -169,18 +152,8 @@ class PurchaseController extends BaseApiController
 
     private function validateRequest($data)
     {
-        if (empty($data['date'])) {
+        if (empty($data['pu_Date'])) {
             throw new Exception('日期為必填');
-        }
-
-        if (empty($data['details']) || !is_array($data['details'])) {
-            throw new Exception('列表不能為空');
-        }
-
-        foreach ($data['details'] as $detail) {
-            if (empty($detail['productId']) || !isset($detail['qty']) || $detail['qty'] <= 0) {
-                throw new Exception('明細資料錯誤');
-            }
         }
     }
 }

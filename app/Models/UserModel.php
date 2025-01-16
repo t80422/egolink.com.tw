@@ -4,6 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 use App\Entities\User;
+use CodeIgniter\CLI\Console;
 use CodeIgniter\Database\BaseBuilder;
 
 class UserModel extends Model
@@ -130,7 +131,7 @@ class UserModel extends Model
         $builder->orderBy('u_Name', 'ASC');
 
         $total = $builder->countAllResults(false);
-        $page = $params['page'] ?? 1;
+        $page = !empty($params['page']) ?  $params['page'] : 1;
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
@@ -155,22 +156,18 @@ class UserModel extends Model
 
     public function getGroupAccountOptionsByLocationId($locationId)
     {
-        return $this->select('
-            u.*,
-            l.l_Name as locationName,
-        ')
-            ->from('users u')
-            ->join('locations l', 'l.l_Id = u.u_l_id')
+        return $this->createBaseBuilder()
             ->where([
                 'u.u_l_Id' => $locationId,
                 'u.u_r_Id' => self::ROLE_GROUP,
                 'u.u_Verified' => 1
             ])
             ->orderBy('u.u_Name', 'ASC')
-            ->findAll();
+            ->get()
+            ->getResult($this->returnType);
     }
 
-    public function getDetail($userId):?User
+    public function getDetail($userId): ?User
     {
         $builder = $this->createBaseBuilder();
         return $builder->where('u.u_Id', $userId)

@@ -134,15 +134,6 @@ class PurchaseModel extends Model
             $builder->where('pu_Date <=', $params['endDate']);
         }
 
-        // 關鍵字 (股號、股名、紀念品名稱)
-        if (!empty($params['keyword'])) {
-            $puIds = $this->pdModel->findPurchaseIdsByKeyword($params['keyword']);
-
-            if (!empty($puIds)) {
-                $builder->whereIn('pu_Id', array_column($puIds, 'pd_pu_Id'));
-            }
-        }
-
         return $builder;
     }
 

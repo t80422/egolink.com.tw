@@ -2,38 +2,35 @@
 
 namespace App\Controllers\Api;
 
-use App\Libraries\UploadService;
-use App\Models\SubAccountModel;
+use App\Entities\SubAccount;
+use App\Libraries\SubAccountService;
 use Config\Services;
 use Exception;
 
 class SubAccountController extends BaseApiController
 {
-    protected $saModel;
-    protected $authSer;
-    protected $uploadSer;
-    protected const IMG_PATH = "SubAccount/";
+    private $saSer;
+    private $authSer;
 
     public function __construct()
     {
-        $this->saModel = new SubAccountModel();
+        $this->saSer = new SubAccountService();
         $this->authSer = Services::auth();
-        $this->uploadSer = new UploadService();
     }
 
     // 新增
     public function create()
     {
         try {
-            $data = $this->getRequestData();
-            $data['sa_u_Id'] = $this->authSer->getUser()->id;
+            $data = [
+                'name' => $this->request->getVar('name'),
+                'idCardNum' => $this->request->getVar('idCardNum'),
+                'memo' => $this->request->getVar('memo'),
+                'voucherType' => $this->request->getVar('voucherType'),
+                'userId' => $this->authSer->getUser()->id
+            ];
 
-            // 檢查身分證是否存在
-            if ($this->saModel->where('sa_IdCardNum', $data['sa_IdCardNum'])->first()) {
-                return $this->errorResponse('此身份證字號已存在');
-            }
-
-            $this->saModel->insert($data);
+            $this->saSer->createSubAccount($data);
 
             return $this->successResponse('新增成功');
         } catch (\Exception $e) {
@@ -47,39 +44,60 @@ class SubAccountController extends BaseApiController
         try {
             $params = [
                 'page' => $this->request->getVar('page'),
-                'sortField' => $this->request->getVar('sortField'),
-                'sortOrder' => $this->request->getVar('sortOrder'),
                 'keyword' => $this->request->getVar('keyword')
             ];
 
             $userId = $this->authSer->getUser()->id;
-            $items = $this->saModel->getList($userId, $params);
-            $result = array_map(fn($item) => $this->formatResponseData($item, true), $items['items']);
-            $response = [
-                'items' => $result,
-                'total' => $items['total'],
-                'page' => $items['page'],
-                'totalPages' => $items['totalPages']
-            ];
+            $result = $this->saSer->getList($userId, $params);
+            $result['items'] = array_map(function (SubAccount $item) {
+                return $item->formatForList();
+            }, $result['items']);
 
-            return $this->successResponse('', $response);
+            return $this->successResponse('', $result);
         } catch (Exception $e) {
             return $this->errorResponse('取得列表時發生錯誤', $e);
         }
     }
 
-    // 修改
+    // 修改_前台
     public function edit($id = null)
     {
         try {
-            $subAcc = $this->saModel->find($id);
-            if (!$subAcc) {
-                return $this->errorResponse('找不到指定子帳號');
-            }
+            $data = [
+                'name' => $this->request->getVar('name'),
+                'memo' => $this->request->getVar('memo'),
+                'voucherType' => $this->request->getVar('voucherType'),
+                'boov' => $this->request->getVar('boov'),
+                'cdc' => $this->request->getVar('cdc')
+            ];
 
-            $data = $this->getRequestData();
+            $userId = $this->authSer->gerUser()->id;
+            $this->saSer->updateSubAccount($id, $data, $userId);
 
-            $this->saModel->update($id, $data);
+            return $this->successResponse('修改成功');
+        } catch (Exception $e) {
+            $this->errorResponse('修改時發生錯誤', $e);
+        }
+    }
+
+    // 修改_後台
+    public function edit_admin($id = null)
+    {
+        try {
+            $data = [
+                'name' => $this->request->getVar('name'),
+                'memo' => $this->request->getVar('memo'),
+                'voucherType' => $this->request->getVar('voucherType'),
+                'idCard' => $this->request->getVar('idCard'),
+                'drivingLicense' => $this->request->getVar('drivingLicense'),
+                'healthCard' => $this->request->getVar('healthCard'),
+                'hrt' => $this->request->getVar('hrt'),
+                'hc' => $this->request->getVar('hc'),
+                'boov' => $this->request->getVar('boov'),
+                'cdc' => $this->request->getVar('cdc')
+            ];
+
+            $this->saSer->updateSubAccount($id, $data);
 
             return $this->successResponse('修改成功');
         } catch (Exception $e) {
@@ -88,185 +106,58 @@ class SubAccountController extends BaseApiController
     }
 
     // 詳細
-    public function detail($id)
+    public function detail_Client($id)
     {
         try {
-            $data = $this->saModel->find($id);
+            $userId = $this->authSer->getUser()->id;
+            $data = $this->saSer->getDetail($id, $userId);
 
-            if (!$data) {
-                return $this->errorResponse('找不到指定子帳號');
-            }
-
-            return $this->successResponse('', $this->formatResponseData($data));
+            return $this->successResponse('', $data->formatForDetail_Client());
         } catch (Exception $e) {
             return $this->errorResponse('取得詳細時發生錯誤', $e);
         }
     }
 
-    // 20241231 不用上傳圖檔
-    // // 上傳圖檔
-    // public function upload($id)
-    // {
-    //     try {
-    //         $this->saModel->transStart();
+    // 詳細
+    public function detail_Admin($id)
+    {
+        try {
+            $data = $this->saSer->getDetail($id);
 
-    //         $subAcc = $this->saModel->find($id);
-
-    //         if (!$subAcc) {
-    //             return $this->errorResponse('找不到指定子帳號');
-    //         }
-
-    //         $fieldMap = [
-    //             'idCardF' => 'sa_IdCardImg_F',
-    //             'idCardB' => 'sa_IdCardImg_B',
-    //             'drivingLicense' => 'sa_DLImg',
-    //             'healthCard' => 'sa_HICImg'
-    //         ];
-
-    //         // 取得上傳檔案
-    //         $files = [
-    //             'idCardF' => $this->request->getFile('idCardFImg'),
-    //             'idCardB' => $this->request->getFile('idCardBImg'),
-    //             'drivingLicense' => $this->request->getFile('drivingLicenseImg'),
-    //             'healthCard' => $this->request->getFile('healthCardImg')
-    //         ];
-
-    //         $basePath = self::IMG_PATH . $id;
-    //         $updateData = [];
-
-    //         foreach ($fieldMap as $type => $dbField) {
-    //             $file = $files[$type];
-    //             $hasOldFile = !empty($subAcc[$dbField]);
-
-    //             // 如果有新檔案上傳
-    //             if ($file->isValid()) {
-    //                 if ($hasOldFile) {
-    //                     $this->uploadSer->deleteFile($subAcc[$dbField], $basePath);
-    //                 }
-
-    //                 $newName = $type . '_' . uniqid() . '.' . $file->getExtension();
-    //                 $this->uploadSer->uploadFile($file, $basePath, $newName);
-    //                 $updateData[$dbField] = $newName;
-    //             } else if ($hasOldFile) {
-    //                 $this->uploadSer->deleteFile($subAcc[$dbField], $basePath);
-    //                 $updateData[$dbField] = null;
-    //             }
-    //         }
-
-    //         if (!empty($updateData)) {
-    //             $this->saModel->update($id, $updateData);
-    //         }
-
-    //         $this->saModel->transComplete();
-
-    //         return $this->successResponse();
-    //     } catch (Exception $e) {
-    //         $this->saModel->transRollback();
-    //         return $this->errorResponse('上傳檔案時發生錯誤', $e);
-    //     }
-    // }
+            return $this->successResponse('', $data->formatForDetail_Admin());
+        } catch (Exception $e) {
+            return $this->errorResponse('取得詳細時發生錯誤', $e);
+        }
+    }
 
     // 刪除
     public function delete($id = null)
     {
         try {
-            $this->saModel->transStart();
-
-            $subAcc = $this->saModel->find($id);
-
-            if (!$subAcc) {
-                return $this->errorResponse('找不到指定子帳號');
-            }
-
-            // 刪除子帳號的資料夾
-            $folderPath = FCPATH . 'upload/' . self::IMG_PATH . $id;
-
-            if (is_dir($folderPath)) {
-                // 先刪除資料夾內的檔案
-                $files = glob($folderPath . '/*');
-
-                foreach ($files as $file) {
-                    if (is_file($file)) {
-                        unlink($file);
-                    }
-                }
-
-                rmdir($folderPath);
-            }
-
-            $this->saModel->delete($id);
-            $this->saModel->transComplete();
+            $this->saSer->deleteSubAccount($id);
 
             return $this->successResponse();
         } catch (Exception $e) {
-            $this->saModel->transRollback();
             return $this->errorResponse('刪除時發生錯誤', $e);
         }
     }
 
-    /**
-     * 取得請求資料
-     *
-     * @return array
-     */
-    private function getRequestData(): array
+    // 查看特定會員的子帳號列表
+    public function getUserSubAccounts($userId = null)
     {
-        $data = [
-            'sa_Name' => $this->request->getVar('name'),
-            'sa_Memo' => $this->request->getVar('memo'),
-        ];
+        try {
+            $params = [
+                'page' => $this->request->getVar('page'),
+            ];
 
-        $idCardNum = $this->request->getVar('idCardNum');
+            $result = $this->saSer->getList($userId, $params, true);
+            $result['items'] = array_map(function (SubAccount $item) {
+                return $item->formatForList();
+            }, $result['items']);
 
-        if ($idCardNum) {
-            $data['sa_IdCardNum']  = $idCardNum;
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得列表時發生錯誤', $e);
         }
-
-        $voucherType = $this->request->getVar('voucherType');
-
-        if ($voucherType) {
-            $data['sa_VoucherType'] = $voucherType;
-        }
-
-        return $data;
-    }
-
-    /**
-     * 格式化回應資料
-     *
-     * @param [type] $data
-     * @return array
-     */
-    private function formatResponseData($data, bool $isIndex = false): array
-    {
-        // 取前5碼
-        $prefix = substr($data['sa_IdCardNum'], 0, 5);
-        $maskedIdCardNum = $prefix . '*****';
-
-        $result = [
-            'id' => $data['sa_Id'],
-            'idCardNum' => $maskedIdCardNum,
-            'name' => $data['sa_Name'],
-            'memo' => $data['sa_Memo'] ?? ''
-        ];
-
-        if ($isIndex) {
-            // 20241231 不用上傳圖檔
-            // $result['idCardFrontImg'] = !empty($data['sa_IdCardImg_F']);
-            // $result['idCardBackImg'] = !empty($data['sa_IdCardImg_B']);
-            // $result['drivingLicenseImg'] = !empty($data['sa_DLImg']);
-            // $result['healthCardImg'] = !empty($data['sa_HICImg']);
-            $result['idCard'] = (bool)$data['sa_IdCard'];
-            $result['drivingLicense'] = (bool)$data['sa_DrivingLicense'];
-            $result['healthCard'] = (bool)$data['sa_HIC'];
-            $result['hrt'] = (bool)$data['sa_HRT'];
-            $result['hc'] = (bool)$data['sa_HC'];
-            $result['boov'] = !empty($data['sa_BOOV']);
-            $result['owner'] = $data['u_Name'];
-        } else {
-            $result['voucherType'] = $data['sa_VoucherType'];
-        }
-
-        return $result;
     }
 }

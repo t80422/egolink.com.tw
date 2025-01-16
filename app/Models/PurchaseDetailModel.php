@@ -11,7 +11,6 @@ class PurchaseDetailModel extends Model
     protected $returnType       = 'array';
     protected $allowedFields    = [
         'pd_p_Id',
-        'pd_sg_Id',
         'pd_pu_Id',
         'pd_Qty'
     ];

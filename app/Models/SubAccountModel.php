@@ -2,23 +2,17 @@
 
 namespace App\Models;
 
+use App\Entities\SubAccount;
 use CodeIgniter\Model;
 
 class SubAccountModel extends Model
 {
-    protected $DBGroup          = 'default';
     protected $table            = 'sub_accounts';
     protected $primaryKey       = 'sa_Id';
-    protected $returnType       = 'array';
+    protected $returnType       = SubAccount::class;
     protected $allowedFields    = [
-        'sa_Id',
-        'sa_IdCardNum',
         'sa_Name',
         'sa_Memo',
-        'sa_IdCardImg_F',
-        'sa_IdCardImg_B',
-        'sa_DLImg',
-        'sa_HICImg',
         'sa_IdCard',
         'sa_DrvingLicense',
         'sa_HIC',
@@ -30,52 +24,58 @@ class SubAccountModel extends Model
         'sa_VoucherType'
     ];
 
+    protected $validationRules = [
+        'sa_Name' => 'required',
+        'sa_IdCardNum' => 'required|exact_length[10]|regex_match[/^[A-Z][1-2][0-9]{8}$/]',
+        'sa_u_Id' => 'required|is_natural_no_zero|exists[users.u_Id]'
+    ];
+
+    protected $validationMessages = [
+        'sa_Name' => [
+            'required' => '姓名為必填',
+        ],
+        'sa_IdCardNum' => [
+            'required' => '身份證字號為必填',
+            'exact_length' => '身份證字號必須為10碼',
+            'regex_match' => '身分證字號格式不正確'
+        ],
+        'sa_u_Id' => [
+            'required' => '所屬用戶為必填',
+            'is_natural_no_zero' => '所屬用戶ID必須為正整數',
+            'exists' => '所屬用戶不存在'
+        ]
+    ];
+
     public function getList(int $userId, $params = [])
     {
-        $builder = $this->builder();
+        $builder = $this->builder('sub_accounts sa');
 
         $builder->select('
-            sub_accounts.*,
-            users.u_Name
+            sa.*,
+            users.u_Name as ownerName
         ')
-            ->join('users', 'users.u_Id = sub_accounts.sa_u_Id')
-            ->where('sub_accounts.sa_u_Id', $userId);
-        $builder->where('sa_u_Id', $userId);
+            ->join('users', 'users.u_Id = sa.sa_u_Id')
+            ->where('sa.sa_u_Id', $userId)
+            ->orderBy('sa.sa_Name');
 
         // 搜尋
         if (!empty($params['keyword'])) {
             $keyword = $params['keyword'];
-
             $builder->groupStart()
                 ->like('sa_Name', $keyword)
                 ->orLike('sa_IdCardNum', $keyword)
                 ->groupEnd();
         }
 
-        // 排序
-        $sortField = $params['sortField'] ?? 'sa_Id';
-        $sortOrder = $params['sortOrder'] ?? 'DESC';
-
-        // 允許排序的欄位
-        $allowedSortFields = [
-            'name' => 'sa_Name',
-            'idCardNum' => 'sa_IdCardNum',
-            'id' => 'sa_Id'
-        ];
-
-        if (isset($allowedSortFields[$sortField])) {
-            $builder->orderBy($allowedSortFields[$sortField], $sortOrder);
-        }
-
         $total = $builder->countAllResults(false);
 
         // 分頁
-        $page = empty($params['page']) ? 1 : (int)$params['page'];
+        $page = $params['page'] ?? 1;
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
             ->get()
-            ->getResultArray();
+            ->getResult($this->returnType);
 
         return [
             'total' => $total,
@@ -83,5 +83,19 @@ class SubAccountModel extends Model
             'totalPages' => ceil($total / $limit),
             'items' => $items
         ];
+    }
+
+    public function isIdCardNumExists(string $idCardNum): bool
+    {
+        $builder = $this->where('sa_IdCardNum', $idCardNum);
+
+        return $builder->countAllResults() > 0;
+    }
+
+    public function getIdsByUserId(int $userId): array
+    {
+        return $this->where('sa_u_Id', $userId)
+            ->select('sa_Id')
+            ->findAll();
     }
 }

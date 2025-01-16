@@ -31,15 +31,15 @@ class UserController extends BaseApiController
     {
         try {
             $currentUser = $this->authService->getUser();
-            $roleOptions = $currentUser->role === "1" ? [
-                ['value' => 1, 'label' => '總管理者'],
+            $roleOptions = [
                 ['value' => 2, 'label' => '據點帳號'],
-                ['value' => 3, 'label' => '群組帳號']
-            ] :
-                [
-                    ['value' => 2, 'label' => '據點帳號'],
-                    ['value' => 3, 'label' => '群組帳號']
-                ];
+                ['value' => 3, 'label' => '群組帳號'],
+                ['value' => 4, 'label' => '一般帳號']
+            ];
+
+            if ($currentUser->role === "1") {
+                array_unshift($roleOptions, ['value' => 1, 'label' => '總管理者']);
+            }
 
             return $this->successResponse('', $roleOptions);
         } catch (\Exception $e) {
@@ -167,13 +167,7 @@ class UserController extends BaseApiController
     public function index()
     {
         try {
-            $params = [
-                'page' => $this->request->getVar('page'),
-                'roleId' => $this->request->getVar('roleId'),
-                'locationId' => $this->request->getVar('locationId'),
-                'keyword' => $this->request->getVar('keyword'),
-            ];
-
+            $params = $this->request->getGet();
             $datas = $this->userModel->getList($params);
 
             return $this->successResponse('', $datas);
