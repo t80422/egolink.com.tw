@@ -7,19 +7,20 @@ use CodeIgniter\Entity\Entity;
 class User extends Entity
 {
     protected $datamap = [
-        'id' => 'u_Id',
-        'name' => 'u_Name',
-        'password' => 'u_Password',
-        'roleId' => 'u_r_Id',
-        'email' => 'u_Account',
-        'verified' => 'u_Verified',
-        'verifyToken' => 'u_VerifyToken',
-        'verifyExpires' => 'u_VerifyExpires',
-        'locationId' => 'u_l_Id',
-        'phone' => 'u_Phone',
-        'postalCode' => 'u_PostalCode',
-        'address' => 'u_Address',
-        'parentId' => 'u_ParentId'
+        'id' => 'u_Id', //編號
+        'name' => 'u_Name', // 姓名
+        'password' => 'u_Password', // 密碼
+        'roleId' => 'u_r_Id', // 角色編號
+        'email' => 'u_Account', // 帳號(Email)
+        'verified' => 'u_Verified', // 驗證
+        'verifyToken' => 'u_VerifyToken', // 驗證Token
+        'verifyExpires' => 'u_VerifyExpires', // 驗證期限
+        'locationId' => 'u_l_Id', // 據點編號
+        'phone' => 'u_Phone', // 手機
+        'postalCode' => 'u_PostalCode', // 	郵遞區號
+        'address' => 'u_Address', // 地址
+        'parentId' => 'u_ParentId', // 群組編號
+        'canAutoVote'=>'u_CanAutoVote' // 可否自動投票
     ];
 
     public function formatForList(): array

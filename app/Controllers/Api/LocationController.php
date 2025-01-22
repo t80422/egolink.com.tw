@@ -85,12 +85,11 @@ class LocationController extends BaseApiController
                 'name' => $location['l_Name'],
                 'phone' => $location['l_Phone'],
                 'address' => $location['l_Address'],
-                'lineLink' => $location['l_LineLink'],
-                'image' => $location['l_Image']
+                'lineLink' => $location['l_LineLink']
             ];
 
             if (isset($location['l_Image'])) {
-                $data['imageUrl'] = base_url('upload/' . $this->fileDir . '/' . $location['l_Image']);
+                $data['imageUrl'] = base_url('uploads/' . $this->fileDir . '/' . $location['l_Image']);
             }
 
             return $this->successResponse('Success', $data);
@@ -118,7 +117,9 @@ class LocationController extends BaseApiController
                 $data['l_Image'] = $newName;
             }
 
-            $this->locationModel->update($id, $data);
+            if(!$this->locationModel->update($id, $data)){
+                return $this->errorResponse('新增失敗');
+            }
 
             if (isset($newName)) {
                 $this->uploadSer->uploadFile($image, $this->fileDir, $newName);

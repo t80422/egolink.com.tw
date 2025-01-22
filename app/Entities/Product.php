@@ -57,4 +57,11 @@ class Product extends Entity
     {
         return $this->attributes['updaterName'] ?? null;
     }
+
+    public function formatForOptions(){
+        return[
+            'value'=>$this->id,
+            'label'=>$this->name
+        ];
+    }
 }

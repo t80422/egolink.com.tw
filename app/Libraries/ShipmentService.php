@@ -32,6 +32,10 @@ class ShipmentService
 
             $shipmentId = $this->shipmentModel->insert($shipment);
 
+            if(!$shipmentId){
+                throw new Exception('新增失敗');
+            }
+
             // 取得用戶的子帳號
             $orderIds = $this->orderModel->getShippableOrderIdsByUserId($data['userId']);
 

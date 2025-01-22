@@ -96,6 +96,14 @@ class ProductModel extends Model
             ->getResult($this->returnType)[0] ?? null;
     }
 
+    public function getBySGId(int $sgId):array
+    {
+        return $this->builder()
+            ->where('p_sg_Id', $sgId)
+            ->get()
+            ->getResult($this->returnType);
+    }
+
     private function baseBuilder()
     {
         return $this->builder('products p')

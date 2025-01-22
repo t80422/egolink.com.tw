@@ -2,6 +2,8 @@
 
 namespace App\Libraries;
 
+use Exception;
+
 class EmailService
 {
     protected $email;
@@ -47,6 +49,33 @@ class EmailService
             return $this->email->send();
         } catch (\Exception $e) {
             log_message('error', '郵件發送異常: {error}', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendResetPwdEmail($to, $token)
+    {
+        $resetLink = site_url("/auth/reset-password/{$token}");
+        $message = "
+            <h2>重置密碼</h2>
+            <p>請點擊下方連結重置您的密碼:</p>
+            <p><a href='{$resetLink}'>{$resetLink}</a></p>
+            <p>此連結將在1小時候失效</p>
+        ";
+
+        try {
+            $this->email->setFrom(
+                getenv('email.SMTPUser'),
+                getenv('email.formName')
+            );
+            $this->email->setTo($to);
+            $this->email->setSubject('重置密碼');
+            $this->email->setMessage($message);
+
+            return $this->email->send();
+        } catch (Exception $e) {
+            log_message('error', '郵件發送異常:{error}', [
                 'error' => $e->getMessage()
             ]);
         }

@@ -114,4 +114,35 @@ class AuthService
 
         return $userObj;
     }
+
+    public function requestPwdReset(string $email)
+    {
+        $user = $this->userModel->initPswReset($email);
+
+        if (!$user) {
+            throw new Exception('找不到此電子郵件帳號');
+        }
+
+        $this->emailSer->sendResetPwdEmail($user->email, $user->verifyToken);
+    }
+
+    public function verifyResetToken(string $token)
+    {
+        $user = $this->userModel->validateResetToken($token);
+
+        if (!$user) {
+            throw new Exception('無效或已過期的重置連結,請重新申請');
+        }
+    }
+
+    public function resetPassword(string $token, string $newPwd)
+    {
+        $user = $this->userModel->validateResetToken($token);
+
+        if (!$user) {
+            throw new Exception('無效或已過期的重置連結,請重新申請');
+        }
+
+        $this->userModel->resetPsw($user->id, $newPwd);
+    }
 }

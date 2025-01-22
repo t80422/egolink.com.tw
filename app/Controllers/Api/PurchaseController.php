@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Api;
 
+use App\Entities\StockholderGift;
+use App\Libraries\PurchaseService;
 use App\Models\PurchaseDetailModel;
 use App\Models\PurchaseModel;
 use Exception;
@@ -10,11 +12,13 @@ class PurchaseController extends BaseApiController
 {
     protected $purchaseModel;
     protected $pdModel;
+    private $purchaseSer;
 
     public function __construct()
     {
         $this->purchaseModel = new PurchaseModel();
         $this->pdModel = new PurchaseDetailModel();
+        $this->purchaseSer = new PurchaseService();
     }
 
     // 新增
@@ -36,6 +40,11 @@ class PurchaseController extends BaseApiController
             }
 
             $purchaseId = $this->purchaseModel->insert($data);
+
+            if (!$purchaseId) {
+                throw new Exception('新增失敗');
+            }
+
             $details = [];
 
             foreach ($requestData['details'] as $detail) {
@@ -46,7 +55,9 @@ class PurchaseController extends BaseApiController
                 ];
             }
 
-            $this->pdModel->insertBatch($details);
+            if ($this->pdModel->insertBatch($details)) {
+                throw new Exception('新增明細失敗');
+            };
             $this->purchaseModel->db->transComplete();
 
             return $this->successResponse();
@@ -147,6 +158,31 @@ class PurchaseController extends BaseApiController
             return $this->successResponse();
         } catch (Exception $e) {
             return $this->errorResponse('刪除時發生錯誤', $e);
+        }
+    }
+
+    // 取得股票選單
+    public function getSGOptions()
+    {
+        try {
+            $result = $this->purchaseSer->getSGOptions();
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得初始資料時發生錯誤', $e);
+        }
+    }
+
+    // 取得紀念品
+    public function getProductOptions()
+    {
+        try {
+            $sgId = $this->request->getVar('sgId');
+            $result = $this->purchaseSer->getProducts($sgId);
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得紀念品時發生錯誤', $e);
         }
     }
 

@@ -4,8 +4,8 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 use App\Entities\User;
-use CodeIgniter\CLI\Console;
 use CodeIgniter\Database\BaseBuilder;
+use Exception;
 
 class UserModel extends Model
 {
@@ -28,7 +28,8 @@ class UserModel extends Model
         'u_Phone',
         'u_PostalCode',
         'u_Address',
-        'u_ParentId'
+        'u_ParentId',
+        'u_CanAutoVote'
     ];
 
     // 新增前動作
@@ -175,6 +176,40 @@ class UserModel extends Model
             ->getFirstRow($this->returnType);
     }
 
+    public function initPswReset(string $email): ?User
+    {
+        $user = $this->where('u_Account', $email)->first();
+
+        if (!$user) {
+            return null;
+        }
+
+        if (!$user->verified) {
+            throw new Exception('此帳號尚未完成電子郵件驗證');
+        }
+
+        $resetToken  = $this->generateResetToken();
+        $this->update($user->id, $resetToken);
+
+        return $this->find($user->id);
+    }
+
+    public function validateResetToken(string $token): ?User
+    {
+        return $this->where('u_VerifyToken', $token)
+            ->where('u_VerifyExpires >', date('Y-m-d H:i:s'))
+            ->first();
+    }
+
+    public function resetPsw(int $userId, string $newPsw)
+    {
+        $this->update($userId, [
+            'u_Password' => password_hash($newPsw, PASSWORD_BCRYPT),
+            'u_VerifyToken' => null,
+            'u_VerifyExpires' => null
+        ]);
+    }
+
     private function createBaseBuilder(): BaseBuilder
     {
         return $this->builder('users u')
@@ -208,5 +243,13 @@ class UserModel extends Model
                 ->orLike('u.u_Phone', $params['keyword'])
                 ->groupEnd();
         }
+    }
+
+    private function generateResetToken(): array
+    {
+        return [
+            'u_VerifyToken' => bin2hex(random_bytes(32)),
+            'u_VerifyExpires' => date('Y-m-d H:i:s', strtotime('+1 hours'))
+        ];
     }
 }

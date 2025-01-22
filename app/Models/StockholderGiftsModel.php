@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Entities\StockholderGift;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 
@@ -31,6 +32,7 @@ class StockholderGiftsModel extends Model
 
     protected $table = 'stockholder_gifts';
     protected $primaryKey = 'sg_Id';
+    protected $returnType = StockholderGift::class;
     protected $allowedFields = [
         'sg_StockCode',
         'sg_StockName',
@@ -132,6 +134,14 @@ class StockholderGiftsModel extends Model
             ->orderBy('stockholder_gifts.sg_MeetingDate', 'DESC');
 
         return $builder->get()->getResultArray();
+    }
+
+    public function getByYear(int $year):array
+    {
+        $builder=$this->builder();
+        $builder->where('sg_Year',$year);
+
+        return $builder->get()->getResult($this->returnType);
     }
 
     /**

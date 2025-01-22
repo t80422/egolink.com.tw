@@ -9,10 +9,13 @@ use CodeIgniter\Router\RouteCollection;
 $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($routes) {
     // 認證相關路由
     $routes->group('auth', static function ($routes) {
+        $routes->get('verify-email/(:segment)', 'AuthController::verifyEmail/$1');
+        $routes->get('verify-reset/(:segment)', 'AuthController::verifyResetToken/$1');
         $routes->post('login', 'AuthController::login');
         $routes->post('resend-verification', 'AuthController::resendVerification');
-        $routes->get('verify-email/(:segment)', 'AuthController::verifyEmail/$1');
         $routes->post('register', 'UserController::create');
+        $routes->post('request-reset', 'AuthController::requestPasswordReset');
+        $routes->post('reset-password/(:segment)', 'AuthController::resetPassword/$1');
     });
 
     // 管理端路由
@@ -64,6 +67,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('purchase', static function ($routes) {
             $routes->get('/', 'PurchaseController::index');
             $routes->get('(:num)', 'PurchaseController::detail/$1');
+            $routes->get('stockOpions', 'PurchaseController::getSGOptions');
+            $routes->get('productOptions', 'PurchaseController::getProductOptions');
             $routes->post('/', 'PurchaseController::create');
             $routes->put('(:num)', 'PurchaseController::edit/$1');
             $routes->delete('(:num)', 'PurchaseController::delete/$1');

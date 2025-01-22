@@ -3,6 +3,7 @@
 namespace App\Controllers\Api;
 
 use App\Libraries\AuthService;
+use Exception;
 
 /**
  * 認證
@@ -67,6 +68,58 @@ class AuthController extends BaseApiController
             return $this->successResponse('驗證郵件已重新發送,請檢查您的信箱');
         } catch (\Exception $e) {
             return $this->errorResponse('重新發送郵件時發生錯誤', $e);
+        }
+    }
+
+    // 請求重置密碼
+    public function requestPasswordReset()
+    {
+        try {
+            $email = $this->request->getVar('email');
+
+            if (empty($email)) {
+                return $this->errorResponse('請提供電子郵件');
+            }
+
+            $this->authSer->requestPwdReset($email);
+
+            return $this->successResponse();
+        } catch (Exception $e) {
+            return $this->errorResponse('請求重置密碼時發生錯誤', $e);
+        }
+    }
+
+    // 驗證重置令牌
+    public function verifyResetToken($token)
+    {
+        try {
+            if (empty($token)) {
+                return $this->errorResponse('未提供token');
+            }
+
+            $this->authSer->verifyResetToken($token);
+
+            return $this->successResponse();
+        } catch (Exception $e) {
+            return $this->errorResponse('驗證重置令牌時發生錯誤', $e);
+        }
+    }
+
+    // 重置密碼
+    public function resetPassword($token)
+    {
+        try {
+            $password = $this->request->getVar('password');
+
+            if (empty($password)) {
+                return $this->errorResponse('請提供密碼');
+            }
+
+            $this->authSer->resetPassword($token, $password);
+
+            return $this->successResponse();
+        } catch (Exception $e) {
+            return $this->errorResponse('重置密碼時發生錯誤');
         }
     }
 }
