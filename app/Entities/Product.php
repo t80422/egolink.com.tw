@@ -11,7 +11,8 @@ class Product extends Entity
         'sgId' => 'p_sg_Id',
         'name' => 'p_Name',
         'img' => 'p_Image',
-        'qty' => 'p_Qty',
+        'qty' => 'p_InboundQty',
+        'outBoundQty' => 'p_OutboundQty',
         'sequence' => 'p_Sequence',
         'createdAt' => 'p_CreatedAt',
         'updatedAt' => 'p_UpdatedAt',
@@ -58,10 +59,20 @@ class Product extends Entity
         return $this->attributes['updaterName'] ?? null;
     }
 
-    public function formatForOptions(){
-        return[
-            'value'=>$this->id,
-            'label'=>$this->name
+    public function formatForOptions()
+    {
+        return [
+            'value' => $this->id,
+            'label' => $this->name
         ];
+    }
+
+    /**
+     * 取得可用庫存
+     *
+     * @return integer
+     */
+    public function getAvailableStock():int{
+        return $this->qty -$this->outBoundQty;
     }
 }

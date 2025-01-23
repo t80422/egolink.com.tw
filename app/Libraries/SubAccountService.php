@@ -35,13 +35,13 @@ class SubAccountService
             throw new Exception('找不到指定資料');
         }
 
-        if ($userId && $subAccount->userId !== $userId) {
+        if ($userId  && $subAccount->userId !== $userId) {
             throw new Exception('無權限編輯此子帳號');
         }
 
         $subAccount->fill($data);
 
-        $this->saModel->save($subAccount);
+        $this->saModel->update($id,$subAccount);
     }
 
     public function deleteSubAccount(int $id)
@@ -76,7 +76,7 @@ class SubAccountService
             throw new Exception('找不到指定資料');
         }
 
-        if (!$userId && $subAccount->userId !== $userId) {
+        if ($userId && $subAccount->userId !== $userId) {
             throw new Exception('無權限查看此子帳號');
         }
 

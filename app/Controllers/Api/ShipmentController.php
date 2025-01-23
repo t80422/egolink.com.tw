@@ -18,11 +18,7 @@ class ShipmentController extends BaseApiController
     public function create()
     {
         try {
-            $data = [
-                'date' => $this->request->getVar('date'),
-                'memo' => $this->request->getVar('memo'),
-                'userId' => $this->request->getVar('userId')
-            ];
+            $data = $this->request->getJSON(true);
 
             $this->shipmentSer->createShipment($data);
 
@@ -81,4 +77,7 @@ class ShipmentController extends BaseApiController
             return $this->errorResponse('刪除時發生錯誤', $e);
         }
     }
+
+    // 取得委託會員
+    
 }

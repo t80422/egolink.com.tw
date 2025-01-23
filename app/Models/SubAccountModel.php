@@ -14,7 +14,7 @@ class SubAccountModel extends Model
         'sa_Name',
         'sa_Memo',
         'sa_IdCard',
-        'sa_DrvingLicense',
+        'sa_DrivingLicense',
         'sa_HIC',
         'sa_HRT',
         'sa_HC',
@@ -27,7 +27,7 @@ class SubAccountModel extends Model
     protected $validationRules = [
         'sa_Name' => 'required',
         'sa_IdCardNum' => 'required|exact_length[10]|regex_match[/^[A-Z][1-2][0-9]{8}$/]',
-        'sa_u_Id' => 'required|is_natural_no_zero|exists[users.u_Id]'
+        'sa_u_Id' => 'required|is_natural_no_zero'
     ];
 
     protected $validationMessages = [
@@ -41,8 +41,7 @@ class SubAccountModel extends Model
         ],
         'sa_u_Id' => [
             'required' => '所屬用戶為必填',
-            'is_natural_no_zero' => '所屬用戶ID必須為正整數',
-            'exists' => '所屬用戶不存在'
+            'is_natural_no_zero' => '所屬用戶ID必須為正整數'
         ]
     ];
 

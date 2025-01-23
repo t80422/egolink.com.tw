@@ -19,13 +19,19 @@ class InventoryLogModel extends Model
         'il_CreatedBy',
         'il_Memo'
     ];
+
     protected $validationRules = [
-        'il_Qty' => 'required|is_natural'
+        'il_Qty' => 'required|is_natural',
+        'il_p_Id' => 'required'
     ];
+
     protected $validationMessages = [
         'il_Qty' => [
             'required' => '數量為必填',
             'is_natural' => '數量必須為正整數'
+        ],
+        'il_p_Id' => [
+            'required' => '紀念品編號為必填'
         ]
     ];
 

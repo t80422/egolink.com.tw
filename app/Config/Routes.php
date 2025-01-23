@@ -44,7 +44,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('subAccount', static function ($routes) {
             $routes->get('(:num)', 'SubAccountController::getUserSubAccounts/$1');
             $routes->get('detail/(:num)', 'SubAccountController::detail_Admin/$1');
-            $routes->put('subAccount/(:num)', 'SubAccountController::edit/$1');
+            $routes->put('(:num)', 'SubAccountController::edit_admin/$1');
         });
 
         // 最新消息
@@ -88,6 +88,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('shipment', static function ($routes) {
             $routes->get('/', 'ShipmentController::index');
             $routes->get('(:num)', 'ShipmentController::detail');
+            $routes->get('orders', 'ShipmentController::function');
             $routes->post('/', 'ShipmentController::create');
             $routes->put('(:num)', 'ShipmentController::edit/$1');
             $routes->delete('(:num)', 'ShipmentController::delete/$1');

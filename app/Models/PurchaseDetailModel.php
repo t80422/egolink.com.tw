@@ -15,6 +15,20 @@ class PurchaseDetailModel extends Model
         'pd_Qty'
     ];
 
+    protected $validationRules = [
+        'pd_p_Id' => 'required',
+        'pd_pu_Id' => 'required'
+    ];
+
+    protected $validationMessages = [
+        'pd_p_Id' => [
+            'required' => '紀念品編號為必填',
+        ],
+        'pd_pu_Id' => [
+            'required' => '進貨編號為必填',
+        ]
+    ];
+
     public function getStockGiftDetails(array $puIds): array
     {
         if (empty($puIds)) {

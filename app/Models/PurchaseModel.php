@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Entities\Purchase;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 use Exception;
@@ -10,10 +11,20 @@ class PurchaseModel extends Model
 {
     protected $table            = 'purchases';
     protected $primaryKey       = 'pu_Id';
-    protected $returnType       = 'array';
+    protected $returnType       = Purchase::class;
     protected $allowedFields    = [
         'pu_Date',
         'pu_Memo'
+    ];
+
+    protected $validationRules = [
+        'pu_Date' => 'required'
+    ];
+
+    protected $validationMessages = [
+        'pu_Date' => [
+            'required' => '日期為必填',
+        ]
     ];
 
     protected $pdModel;

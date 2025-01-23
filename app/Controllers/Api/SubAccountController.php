@@ -84,22 +84,10 @@ class SubAccountController extends BaseApiController
     public function edit_admin($id = null)
     {
         try {
-            $data = [
-                'name' => $this->request->getVar('name'),
-                'memo' => $this->request->getVar('memo'),
-                'voucherType' => $this->request->getVar('voucherType'),
-                'idCard' => $this->request->getVar('idCard'),
-                'drivingLicense' => $this->request->getVar('drivingLicense'),
-                'healthCard' => $this->request->getVar('healthCard'),
-                'hrt' => $this->request->getVar('hrt'),
-                'hc' => $this->request->getVar('hc'),
-                'boov' => $this->request->getVar('boov'),
-                'cdc' => $this->request->getVar('cdc')
-            ];
+            $request = $this->request->getJSON(true);
+            $this->saSer->updateSubAccount($id, $request);
 
-            $this->saSer->updateSubAccount($id, $data);
-
-            return $this->successResponse('修改成功');
+            return $this->successResponse();
         } catch (Exception $e) {
             $this->errorResponse('修改時發生錯誤', $e);
         }

@@ -294,7 +294,7 @@ class OrderModel extends Model
             ->join('sub_accounts sa', 'sa.sa_Id = orders.o_sa_Id')
             ->where([
                 'sa.sa_u_Id' => $userId,
-                'orders.o_Status' => self::STATUS['2']
+                'orders.o_Status' => Order::STATUS_PENDING
             ])
             ->where('orders.o_s_Id IS NULL')
             ->orderBy('orders.o_Date', 'ASC')
@@ -316,5 +316,22 @@ class OrderModel extends Model
         $this->where('o_s_Id', $shipmentId)
             ->set('o_Status', Order::STATUS_PENDING)
             ->update();
+    }
+
+    public function getShippableUsers(array $params=[]):array{
+        $builder=$this->db->table('users u')
+        ->select('
+            DISTINCT u.u_Id,
+            u.u_Name,
+            u.u_Phone,
+            l.l_Name as locationName
+        ')
+        ->join('sub_accounts sa', 'sa.sa_u_Id = u.u_Id')
+        ->join('orders o', 'o.o_sa_Id = sa.sa_Id')
+        ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
+        ->join('products p', 'p.p_sg_Id = sg.sg_Id')
+        ->join('locations l', 'l.l_Id = u.u_l_Id', 'left')
+        ->where('o.o_Status', self::STATUS['2'])
+        ->where('(p.p_InboundQty - p.p_OutboundQty) >', 0);
     }
 }

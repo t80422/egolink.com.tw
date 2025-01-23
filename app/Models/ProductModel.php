@@ -14,7 +14,8 @@ class ProductModel extends Model
         'p_sg_Id',
         'p_Name',
         'p_Image',
-        'p_Qty',
+        'p_InboundQty',
+        'p_OutboundQty',
         'p_Sequence',
         'p_CreatedBy',
         'p_UpdatedBy'
@@ -23,7 +24,7 @@ class ProductModel extends Model
     protected $validationRules = [
         'p_Name' => 'required|min_length[1]',
         'p_sg_Id' => 'required',
-        'p_Qty' => 'required|is_natural'
+        'p_InboundQty' => 'required|is_natural'
     ];
     protected $validationMessages = [
         'p_Name' => [
@@ -33,7 +34,7 @@ class ProductModel extends Model
         'p_sg_Id' => [
             'required' => '股東會Id為必填'
         ],
-        'p_Qty' => [
+        'p_InboundQty' => [
             'required' => '數量為必填',
             'is_natural' => '數量必須為正整數'
         ]
@@ -96,12 +97,30 @@ class ProductModel extends Model
             ->getResult($this->returnType)[0] ?? null;
     }
 
-    public function getBySGId(int $sgId):array
+    public function getBySGId(int $sgId): array
     {
         return $this->builder()
             ->where('p_sg_Id', $sgId)
             ->get()
             ->getResult($this->returnType);
+    }
+
+    /**
+     * 更新出貨數量
+     *
+     * @param integer $id 紀念品ID
+     * @param integer $qty 出貨數量
+     * @return boolean
+     */
+    public function updateOutboundQty(int $id, int $qty): bool
+    {
+        $product = $this->find($id);
+
+        if (!$product || $product->getAvailableStock() < $qty) {
+            return false;
+        }
+        
+        return $this->set('p_OutboundQty', "p_OutboundQty + {$qty}", false);
     }
 
     private function baseBuilder()

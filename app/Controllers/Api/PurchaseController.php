@@ -2,7 +2,6 @@
 
 namespace App\Controllers\Api;
 
-use App\Entities\StockholderGift;
 use App\Libraries\PurchaseService;
 use App\Models\PurchaseDetailModel;
 use App\Models\PurchaseModel;
@@ -25,44 +24,11 @@ class PurchaseController extends BaseApiController
     public function create()
     {
         try {
-            $this->purchaseModel->db->transStart();
             $requestData = $this->request->getJSON(true);
-
-            $data = [
-                'pu_Date' => $requestData['date'],
-                'pu_Memo' => $requestData['memo']
-            ];
-
-            $this->validateRequest($data);
-
-            if (empty($requestData['details']) || !is_array($requestData['details'])) {
-                throw new Exception('列表不能為空');
-            }
-
-            $purchaseId = $this->purchaseModel->insert($data);
-
-            if (!$purchaseId) {
-                throw new Exception('新增失敗');
-            }
-
-            $details = [];
-
-            foreach ($requestData['details'] as $detail) {
-                $details[] = [
-                    'pd_p_Id' => $detail['productId'],
-                    'pd_pu_Id' => $purchaseId,
-                    'pd_Qty' => $detail['qty']
-                ];
-            }
-
-            if ($this->pdModel->insertBatch($details)) {
-                throw new Exception('新增明細失敗');
-            };
-            $this->purchaseModel->db->transComplete();
+            $this->purchaseSer->createPurchase($requestData);
 
             return $this->successResponse();
         } catch (Exception $e) {
-            $this->purchaseModel->db->transRollback();
             return $this->errorResponse('新增時發生錯誤', $e);
         }
     }

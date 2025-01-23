@@ -33,7 +33,7 @@ class SubAccount extends Entity
             'memo' => $this->memo ?? '',
             'idCard' => (bool)$this->idCard,
             'drivingLicense' => (bool)$this->drivingLicense,
-            'healthCard' => (bool)$this->healthCard,
+            'hic' => (bool)$this->hic,
             'hrt' => (bool)$this->hrt,
             'hc' => (bool)$this->hc,
             'boov' => $this->boov,

@@ -22,8 +22,7 @@ class ProductController extends BaseApiController
         try {
             $data = [
                 'sgId' => $this->request->getVar('sgId'),
-                'name' => $this->request->getVar('name'),
-                'qty' => $this->request->getVar('qty')
+                'name' => $this->request->getVar('name')
             ];
             $userId = Services::auth()->getUser()->id;
 

@@ -7,13 +7,15 @@ use App\Entities\Product;
 use App\Models\InventoryLogModel;
 use App\Models\ProductModel;
 use CodeIgniter\HTTP\Files\UploadedFile;
+use Config\Services;
 use Exception;
 
 class ProductService
 {
-    protected $productModel;
-    protected $iLogModel;
-    protected $uploadSer;
+    private $productModel;
+    private $iLogModel;
+    private $uploadSer;
+    private $authSer;
 
     private const UPLOAD_DIR = 'gifts';
 
@@ -22,6 +24,7 @@ class ProductService
         $this->productModel = new ProductModel();
         $this->iLogModel = new InventoryLogModel();
         $this->uploadSer = new UploadService();
+        $this->authSer = Services::auth();
     }
 
     public function createProduct(array $data, ?UploadedFile $img, int $userId)
@@ -208,6 +211,30 @@ class ProductService
         }, $result['items']);
 
         return $result;
+    }
+
+    public function updateInventory(int $productId, int $qty, string $memo = null)
+    {
+        $product = $this->productModel->find($productId);
+        $newQty = $product->qty + $qty;
+        $logData = new InventoryLog([
+            'pId' => $product->id,
+            'type' => InventoryLog::TYPE_IN,
+            'qty' => $qty,
+            'beforeQty' => $product->qty,
+            'user' => $this->authSer->getUser()->id,
+            'memo' => $memo
+        ]);
+
+        $product->qty = $newQty;
+
+        if (!$this->productModel->update($productId, $product)) {
+            throw new Exception('更新庫存失敗');
+        }
+        
+        if (!$this->iLogModel->insert($logData)) {
+            throw new Exception('新增異動紀錄失敗');
+        }
     }
 
     /**
