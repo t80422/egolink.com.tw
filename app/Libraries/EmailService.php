@@ -6,11 +6,17 @@ use Exception;
 
 class EmailService
 {
-    protected $email;
+    private $email;
+    private $frontendBaseUrl;
 
     public function __construct()
     {
         $this->email = \Config\Services::email();
+        $this->frontendBaseUrl=getenv('frontend.baseURL');
+
+        if(empty($this->frontendBaseUrl)){
+            throw new Exception('未設置前端網址');
+        }
 
         // 配置郵件設定
         $this->email->initialize([
@@ -28,7 +34,7 @@ class EmailService
 
     public function sendVerificationEmail($to, $token)
     {
-        $verifyLink = site_url("verify-email/{$token}");
+        $verifyLink = rtrim($this->frontendBaseUrl,'/') . "/api/verify-email/{$token}";
 
         $message = "
             <h2>電子郵件驗證</h2>

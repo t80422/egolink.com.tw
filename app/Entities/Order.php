@@ -48,4 +48,14 @@ class Order extends Entity
     {
         return $this->status === self::STATUS_PENDING;
     }
+
+    public function formatShippableUser(): array
+    {
+        return [
+            'userId' => $this->attributes['u_Id'],
+            'name' => $this->attributes['u_Name'],
+            'phone' => $this->attributes['u_Phone'],
+            'location' => $this->attributes['l_Name'],
+        ];
+    }
 }

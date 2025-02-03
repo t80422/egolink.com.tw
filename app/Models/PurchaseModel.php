@@ -43,13 +43,14 @@ class PurchaseModel extends Model
         $total = $builder->countAllResults(false);
 
         // 處理分頁
-        $page = $params['page'] ?? 1;
+        $page = empty($params['page']) ? 1 : $params['page'];
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->orderBy('pu_Date', 'DESC')
             ->limit($limit, $offset)
             ->get()
             ->getResultArray();
+
 
         // 取得進貨明細資訊
         $puIds = array_column($items, 'pu_Id');

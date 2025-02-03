@@ -10,6 +10,7 @@ class ProductModel extends Model
 {
     protected $table = 'products';
     protected $primaryKey = 'p_Id';
+    protected $returnType = Product::class;
     protected $allowedFields = [
         'p_sg_Id',
         'p_Name',
@@ -20,7 +21,6 @@ class ProductModel extends Model
         'p_CreatedBy',
         'p_UpdatedBy'
     ];
-    protected $returnType = Product::class;
     protected $validationRules = [
         'p_Name' => 'required|min_length[1]',
         'p_sg_Id' => 'required',
@@ -39,7 +39,6 @@ class ProductModel extends Model
             'is_natural' => '數量必須為正整數'
         ]
     ];
-
 
     /**
      * 取得指定股東會紀念品列表
@@ -73,10 +72,9 @@ class ProductModel extends Model
     {
         $builder = $this->baseBuilder();
         $this->applySearchFilters($builder, $params);
-        $this->applySorting($builder, $params);
 
         $total = $builder->countAllResults(false);
-        $page = $params['page'] ?? 1;
+        $page = empty($params['page']) ? 1 : $params['page'];
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)->get()->getResult($this->returnType);
@@ -119,7 +117,7 @@ class ProductModel extends Model
         if (!$product || $product->getAvailableStock() < $qty) {
             return false;
         }
-        
+
         return $this->set('p_OutboundQty', "p_OutboundQty + {$qty}", false);
     }
 
@@ -160,25 +158,6 @@ class ProductModel extends Model
 
         if (!empty($params['endDate'])) {
             $builder->where('p_CreatedAt <=', $params['endDate']);
-        }
-    }
-
-    private function applySorting(BaseBuilder $builder, array $params)
-    {
-        $sortField = $params['sortField'] ?? 'p_CreatedAt';
-        $sortOrder = $params['sortOrder'] ?? 'DESC';
-
-        $sortableFields = [
-            'stockName' => 'sg_StockName',
-            'stockCode' => 'sg_StockCode',
-            'createdBy' => 'creator.u_Name',
-            'updatedBy' => 'updater.u_Name',
-            'createdAt' => 'p_CreatedAt',
-            'updatedAt' => 'p_UpdatedAt'
-        ];
-
-        if (isset($sortableFields[$sortField])) {
-            $builder->orderBy($sortableFields[$sortField], $sortOrder);
         }
     }
 }

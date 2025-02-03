@@ -66,10 +66,16 @@ class AuthService
 
     public function verifyEmail(string $token)
     {
+        // 取得並驗證用戶資料
         $user = $this->userModel->getByEmailToken($token);
 
         if (!$user) {
-            throw new Exception('無效或已過期的驗證連結,請重新申請驗證信');
+            throw new Exception('此帳號已完成驗證,或連結已過期');
+        }
+
+        // 檢查連結是否過期
+        if(strtotime($user->verifyExpores)>time()){
+            throw new Exception('連結已過期,請重新申請驗證信');
         }
 
         $this->userModel->markEmailAsVerified($user->id);

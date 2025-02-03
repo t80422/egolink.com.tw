@@ -11,25 +11,6 @@ use CodeIgniter\Model;
  */
 class StockholderGiftsModel extends Model
 {
-    public const CODE_TABLES = [
-        'meetingType' => [
-            '0' => '臨時',
-            '1' => '常會'
-        ],
-        'marketType' => [
-            '0' => '上市',
-            '1' => '上櫃',
-            '2' => '興櫃',
-            '3' => '公開發行'
-        ],
-        'giftStatus' => [
-            '0' => '無發放',
-            '1' => '未決定',
-            '2' => '票券',
-            '3' => '禮品'
-        ]
-    ];
-
     protected $table = 'stockholder_gifts';
     protected $primaryKey = 'sg_Id';
     protected $returnType = StockholderGift::class;
@@ -58,27 +39,24 @@ class StockholderGiftsModel extends Model
         // 篩選條件
         $builder = $this->applyFilters($builder, $params);
 
-        // 排序
-        $builder = $this->applySorting($builder, $params);
-
         // 計算總筆數
         $total = $builder->countAllResults(false);
 
         // 處理分頁
-        $page = $params['page'] ?? 1;
+        $page = empty($params['page']) ? 1 : (int)$params['page'];
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
         // 取得分頁資料
         $items = $builder->limit($limit, $offset)
             ->get()
-            ->getResultArray();
+            ->getResult($this->returnType);
 
         return [
-            'items' => $items,
             'total' => $total,
             'page' => $page,
-            'totalPages' => ceil($total / $limit)
+            'totalPages' => ceil($total / $limit),
+            'items' => $items,
         ];
     }
 
@@ -86,7 +64,7 @@ class StockholderGiftsModel extends Model
     {
         $options = [];
 
-        foreach (self::CODE_TABLES as $type => $codeTable) {
+        foreach (StockholderGift::CODE_TABLES as $type => $codeTable) {
             $options[$type] = array_map(function ($code, $name) {
                 return [
                     'value' => $code,
@@ -136,10 +114,10 @@ class StockholderGiftsModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function getByYear(int $year):array
+    public function getByYear(int $year): array
     {
-        $builder=$this->builder();
-        $builder->where('sg_Year',$year);
+        $builder = $this->builder();
+        $builder->where('sg_Year', $year);
 
         return $builder->get()->getResult($this->returnType);
     }
@@ -231,35 +209,6 @@ class StockholderGiftsModel extends Model
             ->having('COUNT(DISTINCT dcd.dcd_d_Id) = ' . count($docIds));
 
         return $builder->whereIn('sg_Id', $subQuery);
-    }
-
-    private function applySorting(BaseBuilder $builder, array $params): BaseBuilder
-    {
-        // 預設
-        $sortField = $params['sortField'] ?? 'sg_UpdatedAt';
-        $sortOrder = $params['sortOrder'] ?? 'DESC';
-
-        switch ($sortField) {
-            case 'updateDate':
-                $builder->orderBy('sg_UpdatedAt', $sortOrder);
-                break;
-            case 'meetingType':
-                $builder->orderBy('sg_MeetingType', $sortOrder);
-                break;
-            case 'stockCode':
-                $builder->orderBy('sg_StockCode', $sortOrder);
-                break;
-            case 'stockName':
-                $builder->orderBy('sg_StockName', $sortOrder);
-                break;
-            case 'deadlineDate':
-                $builder->orderBy('sg_DeadlineDate', $sortOrder);
-                break;
-            default:
-                $builder->orderBy($sortField, $sortOrder);
-        }
-
-        return $builder;
     }
 
     private function buildBaseQuery(): BaseBuilder

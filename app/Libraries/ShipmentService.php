@@ -2,6 +2,7 @@
 
 namespace App\Libraries;
 
+use App\Entities\Order;
 use App\Entities\Shipment;
 use App\Models\OrderModel;
 use App\Models\ShipmentModel;
@@ -32,7 +33,7 @@ class ShipmentService
 
             $shipmentId = $this->shipmentModel->insert($shipment);
 
-            if(!$shipmentId){
+            if (!$shipmentId) {
                 throw new Exception('新增失敗');
             }
 
@@ -99,5 +100,15 @@ class ShipmentService
             $this->shipmentModel->db->transRollback();
             throw $e;
         }
+    }
+
+    public function getShippableUsers(array $params = []): array
+    {
+        $result = $this->orderModel->getShippableUsers($params);
+        $result['items'] = array_map(function (Order $item) {
+            return $item->formatShippableUser();
+        }, $result['items']);
+
+        return $result;
     }
 }

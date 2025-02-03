@@ -236,6 +236,11 @@ class UserModel extends Model
             $builder->where('u.u_l_Id', $params['locationId']);
         }
 
+        // 群組帳號
+        if(!empty($params['groupId'])){
+            $builder->where('u.u_ParentId',$params['groupId']);
+        }
+
         // 關鍵字
         if (!empty($params['keyword'])) {
             $builder->groupStart()

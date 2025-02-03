@@ -15,6 +15,10 @@ class DocumentModel extends Model
 
     public function getDocCombinsBySGIds(array $sgIds): array
     {
+        if (empty($sgIds)) {
+            return [];
+        }
+
         $datas = $this->db->table('document_combinations dc')
             ->select('dc.dc_sg_Id, dc.dc_Sequence, d.d_Id, d.d_Name')
             ->join('documents d', 'd.d_Id = dc.dc_d_Id')

@@ -85,7 +85,8 @@ class ShipmentModel extends Model
         $total = $builder->countAllResults(false);
 
         // 分頁
-        $page = $params['page']??1;
+        $page = empty($params['page']) ? 1 : (int)$params['page'];
+        log_message('debug',$page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)

@@ -37,7 +37,7 @@ class AuthController extends BaseApiController
     }
 
     // 驗證電子郵件
-    public function verifyEmail($token)
+    public function verifyEmail($token=null)
     {
         try {
             if (empty($token)) {
@@ -46,9 +46,8 @@ class AuthController extends BaseApiController
 
             $this->authSer->verifyEmail($token);
 
-            return $this->successResponse();
+            return $this->successResponse('驗證成功!');
         } catch (\Exception $e) {
-
             return $this->errorResponse('驗證郵件時發生錯誤', $e);
         }
     }

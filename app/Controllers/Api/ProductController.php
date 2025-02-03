@@ -38,7 +38,7 @@ class ProductController extends BaseApiController
     public function index()
     {
         try {
-            $params = $this->request->getJSON(true);
+            $params = $this->request->getGet();
             $result = $this->productSer->getList($params);
 
             return $this->successResponse('', $result);

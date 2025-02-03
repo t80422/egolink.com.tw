@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Entities\Order;
+use App\Entities\StockholderGift;
 use CodeIgniter\Model;
 use Exception;
 
@@ -227,7 +228,7 @@ class OrderModel extends Model
             $orderData = [
                 'stockCode' => $order['sg_StockCode'],
                 'stockName' => $order['sg_StockName'],
-                'meetingType' => StockholderGiftsModel::CODE_TABLES['meetingType'][$order['sg_MeetingType']],
+                'meetingType' => StockholderGift::CODE_TABLES['meetingType'][$order['sg_MeetingType']],
                 'name' => $order['sa_Name'],
                 'stockShares' => $order['o_StockShares'],
                 'status' => self::STATUS[$order['o_Status']],
@@ -318,20 +319,50 @@ class OrderModel extends Model
             ->update();
     }
 
-    public function getShippableUsers(array $params=[]):array{
-        $builder=$this->db->table('users u')
-        ->select('
-            DISTINCT u.u_Id,
-            u.u_Name,
-            u.u_Phone,
-            l.l_Name as locationName
-        ')
-        ->join('sub_accounts sa', 'sa.sa_u_Id = u.u_Id')
-        ->join('orders o', 'o.o_sa_Id = sa.sa_Id')
-        ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
-        ->join('products p', 'p.p_sg_Id = sg.sg_Id')
-        ->join('locations l', 'l.l_Id = u.u_l_Id', 'left')
-        ->where('o.o_Status', self::STATUS['2'])
-        ->where('(p.p_InboundQty - p.p_OutboundQty) >', 0);
+    public function getShippableUsers(array $params = []): array
+    {
+        $builder = $this->db->table('users u')
+            ->select('DISTINCT u.u_Id, u.u_Name, u.u_Phone, l.l_Name',false)
+            ->join('sub_accounts sa', 'sa.sa_u_Id = u.u_Id')
+            ->join('orders o', 'o.o_sa_Id = sa.sa_Id')
+            ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
+            ->join('products p', 'p.p_sg_Id = sg.sg_Id')
+            ->join('locations l', 'l.l_Id = u.u_l_Id', 'left')
+            ->where('o.o_Status', Order::STATUS_PENDING)
+            ->where('(p.p_InboundQty - p.p_OutboundQty) >', 0);
+
+        // 關鍵字
+        if (!empty($params['keyword'])) {
+            $keyword = $params['keyword'];
+            $builder->groupStart()
+                ->like('u.u_Name', $keyword)
+                ->orLike('sg.sg_StockCode', $keyword)
+                ->orLike('sg.sg_StockName', $keyword)
+                ->groupEnd();
+        }
+
+        // 日期
+        if (!empty($params['startDate'])) {
+            $builder->where('o.o_Date >=', $params['startDate']);
+        }
+
+        if (!empty($params['endDate'])) {
+            $builder->where('o.o_Date <=', $params['endDate']);
+        }
+
+        $total = $builder->countAllResults(false);
+        $page = empty($params['page']) ? 1 : (int)$params['page'];
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+        $items = $builder->limit($limit, $offset)
+            ->get()
+            ->getResult($this->returnType);
+
+        return [
+            'total' => $total,
+            'page' => $page,
+            'totalPages' => ceil($total / $limit),
+            'items' => $items
+        ];
     }
 }

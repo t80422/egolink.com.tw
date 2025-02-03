@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Api;
 
+use App\Entities\StockholderGift;
+use App\Libraries\StockholderGiftService;
 use App\Models\DocumentModel;
 use App\Models\StockholderGiftsModel;
 
@@ -12,45 +14,23 @@ class StockholderGiftsController extends BaseApiController
 {
     protected $sgModel;
     protected $docModel;
+    private $sgSer;
 
     public function __construct()
     {
         $this->sgModel = new StockholderGiftsModel();
         $this->docModel = new DocumentModel();
+        $this->sgSer = new StockholderGiftService();
     }
 
     // 列表
     public function index()
     {
         try {
-            $params = [
-                'page' => $this->request->getVar('page'), // 分頁
-                'sortField' => $this->request->getVar('sortField'), // 排序欄位
-                'sortOrder' => $this->request->getVar('sortOrder'), // 順序
-                'year' => $this->request->getVar('year'), // 年分
-                'keyword' => $this->request->getVar('keyword'), //關鍵字
-                'updateDateStart' => $this->request->getVar('updateDateStart'), // 更新日起
-                'updateDateEnd' => $this->request->getVar('updateDateEnd'), // 更新日迄
-                'lastBuyDateStart' => $this->request->getVar('lastBuyDateStart'), // 最後買進日起
-                'lastBuyDateEnd' => $this->request->getVar('lastBuyDateEnd'), // 最後買進日迄
-                'deadlineDateStart' => $this->request->getVar('deadlineDateStart'), // 代領截止起
-                'deadlineDateEnd' => $this->request->getVar('deadlineDateEnd'), // 代領截止迄
-                'giftStatus' => $this->request->getVar('giftStatus'), // 紀念品狀態
-                'meetingType' => $this->request->getVar('meetingType'), // 開會性質
-                'marketType' => $this->request->getVar('marketType'), // 市場類別
-                'documentIds' => $this->request->getVar('documentIds'), // 文件編號們
-            ];
+            $params = $this->request->getGet();
+            $datas = $this->sgSer->getList($params);
 
-            $datas = $this->sgModel->getList($params);
-            $items = $this->formatData($datas['items']);
-            $result = [
-                'items' => $items,
-                'total' => $datas['total'],
-                'page' => $datas['page'],
-                'totalPages' => $datas['totalPages']
-            ];
-
-            return $this->successResponse('', $result);
+            return $this->successResponse('', $datas);
         } catch (\Exception $e) {
             return $this->errorResponse('取得列表時發生錯誤', $e);
         }
@@ -179,9 +159,9 @@ class StockholderGiftsController extends BaseApiController
             $items = array_map(function ($item) use ($allCombinations) {
                 return [
                     'meetingDate' => $item['sg_MeetingDate'],
-                    'meetingType' => StockholderGiftsModel::CODE_TABLES['meetingType'][$item['sg_MeetingType']],
+                    'meetingType' => StockholderGift::CODE_TABLES['meetingType'][$item['sg_MeetingType']],
                     'giftName' => $item['p_Name'] ?? null,
-                    'giftImg'=>!empty($item['p_Image']) ? base_url('upload/gifts/' . $item['p_Image']) : null,
+                    'giftImg' => !empty($item['p_Image']) ? base_url('upload/gifts/' . $item['p_Image']) : null,
                     'documentCombinations' => $allCombinations[$item['sg_Id']] ?? []
                 ];
             }, $datas);
@@ -198,7 +178,7 @@ class StockholderGiftsController extends BaseApiController
         }
     }
 
-    
+
     private function getRequestData()
     {
         return [
@@ -228,7 +208,7 @@ class StockholderGiftsController extends BaseApiController
 
         $allIds = array_column($items, 'sg_Id');
         $allCombinations = $this->docModel->getDocCombinsBySGIds($allIds);
-        $codeTables = \App\Models\StockholderGiftsModel::CODE_TABLES;
+        $codeTables = StockholderGift::CODE_TABLES;
 
         $result = array_map(function ($item) use ($allCombinations, $codeTables) {
             $formattedItem = [

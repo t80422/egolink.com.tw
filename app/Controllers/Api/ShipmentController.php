@@ -32,7 +32,7 @@ class ShipmentController extends BaseApiController
     public function index()
     {
         try {
-            $params = $this->request->getJSON(true);
+            $params = $this->request->getGet();
             $result = $this->shipmentSer->getList($params);
 
             return $this->successResponse('', $result);
@@ -78,6 +78,16 @@ class ShipmentController extends BaseApiController
         }
     }
 
-    // 取得委託會員
-    
+    // 取得可出貨會員列表
+    public function getShippableUsers()
+    {
+        try {
+            $params = $this->request->getGet();
+            $result = $this->shipmentSer->getShippableUsers($params);
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得可出貨會員列表時發生錯誤', $e);
+        }
+    }
 }
