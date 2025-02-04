@@ -96,6 +96,7 @@ class ProductService
             'sgId' => $data->sgId,
             'name' => $data->name,
             'img' => $data->getImgUrl(),
+            'qty' => $data->qty,
             'creator' => $data->getCreator(),
             'createdAt' => $data->createdAt,
             'updater' => $data->getUpdater(),
@@ -213,14 +214,20 @@ class ProductService
         return $result;
     }
 
-    public function updateInventory(int $productId, int $qty, string $memo = null)
+    public function updateInventory(int $productId, int $diffQty, string $memo = null)
     {
         $product = $this->productModel->find($productId);
-        $newQty = $product->qty + $qty;
+
+        if (!$product) {
+            throw new Exception('找不到指定紀念品');
+        }
+
+        $newQty = ($product->qty ?? 0) + $diffQty;
+
         $logData = new InventoryLog([
             'pId' => $product->id,
             'type' => InventoryLog::TYPE_IN,
-            'qty' => $qty,
+            'qty' => $newQty,
             'beforeQty' => $product->qty,
             'user' => $this->authSer->getUser()->id,
             'memo' => $memo
@@ -231,7 +238,7 @@ class ProductService
         if (!$this->productModel->update($productId, $product)) {
             throw new Exception('更新庫存失敗');
         }
-        
+
         if (!$this->iLogModel->insert($logData)) {
             throw new Exception('新增異動紀錄失敗');
         }

@@ -89,21 +89,8 @@ class PurchaseController extends BaseApiController
     public function edit($id = null)
     {
         try {
-            if (!$this->purchaseModel->find($id)) {
-                return $this->errorResponse('找不到指定資料');
-            }
-
             $requestData = $this->request->getJson(true);
-
-            $this->validateRequest($requestData);
-
-            $data = [
-                'pu_Date' => $requestData['date'],
-                'memo' => $requestData['memo'] ?? ''
-            ];
-
-
-            $this->purchaseModel->updatePurchase($id, $data, $requestData['details']);
+            $this->purchaseSer->updatePurchase($id, $requestData);
 
             return $this->successResponse();
         } catch (Exception $e) {

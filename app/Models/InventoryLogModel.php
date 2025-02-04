@@ -43,7 +43,7 @@ class InventoryLogModel extends Model
 
         $total = $builder->countAllResults(false);
 
-        $page = $params['page'] ?? 1;
+        $page = empty($params['page']) ? 1 : $params['page'];
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
@@ -74,7 +74,7 @@ class InventoryLogModel extends Model
     private function applyFilter(BaseBuilder $builder, array $params)
     {
         // 異動類型
-        if (isset($params['type'])) {
+        if (!empty($params['type'])) {
             $builder->where('il_Type', $params['type']);
         }
 

@@ -97,7 +97,7 @@ class ProductController extends BaseApiController
     public function inventoryLogs()
     {
         try {
-            $params = $this->request->getJSON(true);
+            $params = $this->request->getGet();
             $result = $this->productSer->getInventoryLogList($params);
 
             return $this->successResponse('', $result);

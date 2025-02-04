@@ -17,7 +17,8 @@ class PurchaseDetailModel extends Model
 
     protected $validationRules = [
         'pd_p_Id' => 'required',
-        'pd_pu_Id' => 'required'
+        'pd_pu_Id' => 'required',
+        'pd_Qty' => 'required|is_natural_no_zero'
     ];
 
     protected $validationMessages = [
@@ -26,6 +27,10 @@ class PurchaseDetailModel extends Model
         ],
         'pd_pu_Id' => [
             'required' => '進貨編號為必填',
+        ],
+        'pd_Qty'=>[
+            'required' => '數量為必填',
+            'is_natural_no_zero'=>'數量必須為正整數'
         ]
     ];
 

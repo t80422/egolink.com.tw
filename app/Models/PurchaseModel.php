@@ -14,7 +14,8 @@ class PurchaseModel extends Model
     protected $returnType       = Purchase::class;
     protected $allowedFields    = [
         'pu_Date',
-        'pu_Memo'
+        'pu_Memo',
+        'pu_UpdateAt'
     ];
 
     protected $validationRules = [
@@ -76,8 +77,8 @@ class PurchaseModel extends Model
 
         return [
             'id' => $id,
-            'date' => $purchase['pu_Date'],
-            'memo' => $purchase['pu_Memo'],
+            'date' => $purchase->date,
+            'memo' => $purchase->memo,
             'details' => $details[$id] ?? []
         ];
     }
@@ -135,7 +136,10 @@ class PurchaseModel extends Model
      */
     private function applyFilters(array $params): BaseBuilder
     {
-        $builder = $this->builder();
+        $builder = $this->builder('purchases pu')
+            ->join('purchase_details pd', 'pd.pd_pu_Id = pu.pu_Id')
+            ->join('products p', 'p.p_Id = pd.pd_p_Id')
+            ->join('stockholder_gifts sg', 'sg.sg_Id = p.p_sg_Id');
 
         // 日期區間
         if (!empty($params['startDate'])) {
@@ -144,6 +148,16 @@ class PurchaseModel extends Model
 
         if (!empty($params['endDate'])) {
             $builder->where('pu_Date <=', $params['endDate']);
+        }
+
+        // 關鍵字 (股號、股名、紀念品名稱)
+        if (!empty($params['keyword'])) {
+            $keyword = $params['keyword'];
+            $builder->groupStart()
+                ->like('sg_StockCode', $keyword)
+                ->orLike('sg_StockName', $keyword)
+                ->orLike('p_Name', $keyword)
+                ->groupEnd();
         }
 
         return $builder;

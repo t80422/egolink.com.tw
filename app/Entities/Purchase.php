@@ -9,7 +9,8 @@ class Purchase extends Entity
     protected $datamap = [
         'id' => 'pu_Id',
         'date' => 'pu_Date',
-        'memo' => 'pu_Memo'
+        'memo' => 'pu_Memo',
+        'updateAt'=>'pu_UpdateAt'
     ];
 
     /**

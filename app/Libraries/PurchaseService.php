@@ -11,8 +11,9 @@ use App\Models\PurchaseDetailModel;
 use App\Models\PurchaseModel;
 use App\Models\StockholderGiftsModel;
 use CodeIgniter\Validation\Exceptions\ValidationException;
+use Config\Services;
 use Exception;
-use Firebase\JWT\ExpiredException;
+use RuntimeException;
 
 class PurchaseService
 {
@@ -21,7 +22,6 @@ class PurchaseService
     private $purchaseModel;
     private $pdModel;
     private $productSer;
-
 
     public function __construct()
     {
@@ -93,7 +93,52 @@ class PurchaseService
             $this->purchaseModel->db->transComplete();
         } catch (Exception $e) {
             $this->purchaseModel->db->transRollback();
+            throw $e;
+        }
+    }
 
+    public function updatePurchase(int $id, array $requestData)
+    {
+        $this->purchaseModel->db->transStart();
+
+        try {
+            // 檢查進貨單是否存在
+            $purchase = $this->purchaseModel->find($id);
+
+            if (!$purchase) {
+                throw new Exception('找不到指定進貨單');
+            }
+
+            // 取得原有明細資料
+            $orgDetails = $this->pdModel->where('pd_pu_Id', $id)->findAll();
+
+            // 驗證並處理明細資料
+            $this->validateAndPreparePurchaseDetails($requestData['details']);
+
+            // 更新進貨單
+            $purchase->fill($requestData);
+            $purchase->updateAt=date('Y-m-d H:i:s');
+
+            if (!$this->purchaseModel->update($id, $purchase)) {
+                throw new Exception('修改失敗');
+            };
+
+            // 刪除原有明細
+            $this->pdModel->where('pd_pu_Id', $id)->delete();
+
+            // 新增新的明細
+            $newDetails = $this->preparePurchaseDetails($id, $requestData['details']);
+
+            if (!$this->pdModel->insertBatch($newDetails)) {
+                throw new Exception('明細修改失敗');
+            };
+
+            // 處理庫存異動
+            $this->handleInventoryChanges($orgDetails, $requestData['details']);
+
+            $this->purchaseModel->db->transComplete();
+        } catch (Exception $e) {
+            $this->purchaseModel->db->transRollback();
             throw $e;
         }
     }
@@ -124,6 +169,42 @@ class PurchaseService
             if (!$product) {
                 throw new Exception("產品 ID {$detail['productId']} 不存在");
             }
+        }
+    }
+
+    private function validateAndPreparePurchaseDetails(array $details)
+    {
+        if (empty($details)) {
+            throw new ValidationException('至少需要一筆明細');
+        }
+
+        $productIds = array_column($details, 'productId');
+
+        if (count($productIds) !== count(array_unique($productIds))) {
+            throw new ValidationException('明細中有重複的產品');
+        }
+    }
+
+    private function handleInventoryChanges(array $orgDetails, array $newDetails)
+    {
+        // 建立對照表,方便查詢
+        $orgQtyMap = [];
+
+        foreach ($orgDetails as $detail) {
+            $orgQtyMap[$detail['pd_p_Id']] = $detail['pd_Qty'];
+        }
+
+        foreach ($newDetails as $detail) {
+            $productId = $detail['productId'];
+            $newQty = $detail['qty'];
+            $orgQty = $orgQtyMap[$productId] ?? 0;
+
+            // 計算差異數量
+            $qtyDiff = $newQty - $orgQty;
+
+            if ($qtyDiff != 0) {
+                $this->productSer->updateInventory($productId, $qtyDiff, '進貨單修改');
+            };
         }
     }
 }

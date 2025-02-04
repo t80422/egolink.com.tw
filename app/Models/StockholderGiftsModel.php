@@ -178,7 +178,7 @@ class StockholderGiftsModel extends Model
         }
 
         // 開會性質
-        if (!empty($params['meetingType'])) {
+        if (isset($params['meetingType']) && $params['meetingType'] !== '') {
             $builder->where('sg_MeetingType', $params['meetingType']);
         }
 
