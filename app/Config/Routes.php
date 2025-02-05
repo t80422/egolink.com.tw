@@ -15,10 +15,14 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->post('register', 'UserController::create');
         $routes->post('request-reset', 'AuthController::requestPasswordReset');
         $routes->post('reset-password/(:segment)', 'AuthController::resetPassword/$1');
+        $routes->get('verify-email/(:segment)', 'AuthController::verifyEmail/$1');
+        $routes->get('features', 'AuthController::getFeatures'); // 取得所有功能
+        $routes->get('features/(:num)', 'AuthController::getRoleFeatures/$1'); // 取得角色功能權限
+        $routes->put('features/(:num)', 'AuthController::updateRoleFeatures/$1'); // 更新角色功能權限
     });
 
     // 管理端路由
-    $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
+    $routes->group('admin', ['filter' => ['auth', 'featureAuth']], static function ($routes) {
         // 據點管理
         $routes->group('locations', static function ($routes) {
             $routes->get('/', 'LocationController::index');
@@ -86,7 +90,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         // 出貨作業
         $routes->group('shipment', static function ($routes) {
             $routes->get('/', 'ShipmentController::index');
-            $routes->get('(:num)', 'ShipmentController::detail');
+            $routes->get('(:num)', 'ShipmentController::detail/$1');
             $routes->get('orders', 'ShipmentController::getShippableUsers');
             $routes->post('/', 'ShipmentController::create');
             $routes->put('(:num)', 'ShipmentController::edit/$1');
@@ -139,5 +143,4 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
     $routes->get('news', 'NewsController::index'); // 最新消息列表
     $routes->get('locationOptions', 'LocationController::getOptions'); // 營業據點選單
     $routes->get('qa', 'QAController::index'); // 常見問題列表
-    $routes->get('verify-email/(:segment)', 'AuthController::verifyEmail/$1'); // 驗證信箱
 });

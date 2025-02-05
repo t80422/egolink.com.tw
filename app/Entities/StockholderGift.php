@@ -55,7 +55,6 @@ class StockholderGift extends Entity
         'marketType' => 'sg_MarketType',
         'serviceAgent' => 'sg_ServiceAgent',
         'phone' => 'sg_Phone',
-        'year' => 'sg_Year',
         'updatedAt' => 'sg_UpdatedAt',
         'votingDateStart' => 'sg_VotingDateStart',
         'votingDateEnd' => 'sg_VotingDateEnd'

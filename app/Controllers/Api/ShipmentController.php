@@ -45,7 +45,7 @@ class ShipmentController extends BaseApiController
     public function detail($id = null)
     {
         try {
-            $data = $this->shipmentSer->getDetail($id);
+            $data = $this->shipmentSer->getDetail((int)$id);
 
             return $this->successResponse('', $data);
         } catch (Exception $e) {

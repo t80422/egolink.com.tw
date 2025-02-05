@@ -12,9 +12,9 @@ class EmailService
     public function __construct()
     {
         $this->email = \Config\Services::email();
-        $this->frontendBaseUrl=getenv('frontend.baseURL');
+        $this->frontendBaseUrl = getenv('frontend.baseURL');
 
-        if(empty($this->frontendBaseUrl)){
+        if (empty($this->frontendBaseUrl)) {
             throw new Exception('未設置前端網址');
         }
 
@@ -34,7 +34,7 @@ class EmailService
 
     public function sendVerificationEmail($to, $token)
     {
-        $verifyLink = rtrim($this->frontendBaseUrl,'/') . "/api/verify-email/{$token}";
+        $verifyLink = rtrim($this->frontendBaseUrl, '/') . "/api/auth/verify-email/{$token}";
 
         $message = "
             <h2>電子郵件驗證</h2>
@@ -62,7 +62,7 @@ class EmailService
 
     public function sendResetPwdEmail($to, $token)
     {
-        $resetLink = site_url("/auth/reset-password/{$token}");
+        $resetLink = rtrim($this->frontendBaseUrl, '/') . "/backsite/reset-password/{$token}";
         $message = "
             <h2>重置密碼</h2>
             <p>請點擊下方連結重置您的密碼:</p>
@@ -73,7 +73,7 @@ class EmailService
         try {
             $this->email->setFrom(
                 getenv('email.SMTPUser'),
-                getenv('email.formName')
+                getenv('email.fromName')
             );
             $this->email->setTo($to);
             $this->email->setSubject('重置密碼');

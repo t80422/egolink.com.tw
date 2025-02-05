@@ -26,7 +26,6 @@ class StockholderGiftsModel extends Model
         'sg_MarketType',
         'sg_ServiceAgent',
         'sg_Phone',
-        'sg_Year',
         'sg_GiftStatus',
         'sg_VotingDateStart',
         'sg_VotingDateEnd'
@@ -117,7 +116,10 @@ class StockholderGiftsModel extends Model
     public function getByYear(int $year): array
     {
         $builder = $this->builder();
-        $builder->where('sg_Year', $year);
+        $startDate = $year . '-01-01';
+        $endDate = $year . '-12-31';
+        $builder->where('sg_MeetingDate >=', $startDate)
+            ->where('sg_MeetingDate <=', $endDate);
 
         return $builder->get()->getResult($this->returnType);
     }
@@ -133,7 +135,10 @@ class StockholderGiftsModel extends Model
     {
         // 年度
         if (!empty($params['year'])) {
-            $builder->where('sg_Year', $params['year']);
+            $startDate = $params['year'] . '-01-01';
+            $endDate = $params['year'] . '-12-31';
+            $builder->where('sg_MeetingDate >=', $startDate)
+                ->where('sg_MeetingDate <=', $endDate);
         }
 
         // 關鍵字

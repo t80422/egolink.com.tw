@@ -39,7 +39,6 @@ class InventoryLogModel extends Model
     {
         $builder = $this->createBaseBuilder();
         $this->applyFilter($builder, $params);
-        $this->applySorting($builder, $params);
 
         $total = $builder->countAllResults(false);
 
@@ -96,23 +95,6 @@ class InventoryLogModel extends Model
 
         if (!empty($params['endDate'])) {
             $builder->where('il_CreatedAt <=', $params['endDate']);
-        }
-    }
-
-    private function applySorting(BaseBuilder $builder, array $params)
-    {
-        $sortField = $params['sortField'] ?? 'il_CreatedAt';
-        $sortOrder = $params['sortOrder'] ?? 'DESC';
-        $sortableFields = [
-            'userName' => 'userName',
-            'stockCode' => 'stockCode',
-            'stockName' => 'stockName',
-            'type' => 'il_Type',
-            'createdAt' => 'il_CreatedAt',
-        ];
-
-        if (isset($sortableFieldsp[$sortField])) {
-            $builder->orderBy($sortableFields[$sortField], $sortOrder);
         }
     }
 }

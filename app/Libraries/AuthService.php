@@ -2,6 +2,9 @@
 
 namespace App\Libraries;
 
+use App\Entities\Feature;
+use App\Models\FeatureModel;
+use App\Models\RoleFeatureModel;
 use App\Models\UserModel;
 use Exception;
 
@@ -14,15 +17,19 @@ class AuthService
      */
     private $currentUser;
 
-    protected $userModel;
-    protected $jwtSer;
-    protected $emailSer;
+    private $userModel;
+    private $jwtSer;
+    private $emailSer;
+    private $featureModel;
+    private $roleFeatureModel;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->jwtSer = new JWTService();
         $this->emailSer = new EmailService();
+        $this->featureModel = new FeatureModel();
+        $this->roleFeatureModel = new RoleFeatureModel();
     }
 
     public function setUser(object $user)
@@ -74,7 +81,7 @@ class AuthService
         }
 
         // 檢查連結是否過期
-        if(strtotime($user->verifyExpores)>time()){
+        if (strtotime($user->verifyExpores) > time()) {
             throw new Exception('連結已過期,請重新申請驗證信');
         }
 
@@ -123,11 +130,21 @@ class AuthService
 
     public function requestPwdReset(string $email)
     {
-        $user = $this->userModel->initPswReset($email);
+        $user = $this->userModel->getByAccount($email);
 
         if (!$user) {
             throw new Exception('找不到此電子郵件帳號');
         }
+
+        if (!$user->verified) {
+            throw new Exception('此帳號尚未驗證');
+        }
+
+        // 生成重置的 token 和過期時間
+        $user->verifyToken = bin2hex(random_bytes(32));
+        $user->verifyExpires = date('Y-m-d H:i:s', strtotime('+1 hours'));
+
+        $this->userModel->update($user->id, $user);
 
         $this->emailSer->sendResetPwdEmail($user->email, $user->verifyToken);
     }
@@ -150,5 +167,76 @@ class AuthService
         }
 
         $this->userModel->resetPsw($user->id, $newPwd);
+    }
+
+    /**
+     * 取得所有功能
+     *
+     * @return array
+     */
+    public function getAllFeatures(): array
+    {
+        $datas = $this->featureModel->findAll();
+
+        return array_map(function (Feature $data) {
+            return $data->formatForOption();
+        }, $datas);
+    }
+
+    /**
+     * 取得角色權限狀態
+     *
+     * @param integer $roleId
+     * @return array
+     */
+    public function getRoleFeatures(int $roleId): array
+    {
+        $allFeatures = $this->featureModel->findAll();
+        $roleFeatures = $this->featureModel->getFeaturesByRoleId($roleId);
+        $roleFeatureIds = array_column($roleFeatures, 'id');
+
+        $result = [];
+
+        foreach ($allFeatures as $feature) {
+            $result[] = [
+                'id' => $feature->id,
+                'authorized' => in_array($feature->id, $roleFeatureIds)
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * 更新角色的功能權限
+     *
+     * @param integer $roleId
+     * @param array $featureIds
+     * @return void
+     */
+    public function updateRoleFeatures(int $roleId, array $featureIds)
+    {
+
+        // 驗證功能Id
+        $validFeatures = $this->featureModel->getByFeatureIds($featureIds);
+        
+        if (count($validFeatures) !== count($featureIds)) {
+            throw new Exception('包含無效的功能Id');
+        }
+
+        // 更新權限
+        $this->roleFeatureModel->updateRoleFeatures($roleId, $featureIds);
+    }
+
+    /**
+     * 檢查角色是否有特定功能的權限
+     *
+     * @param integer $roleId
+     * @param string $featureCode
+     * @return boolean
+     */
+    public function hasFeaturePermission(int $roleId, string $featureCode): bool
+    {
+        return $this->featureModel->hasPermission($roleId, $featureCode);
     }
 }

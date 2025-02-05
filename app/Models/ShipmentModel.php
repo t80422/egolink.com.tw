@@ -86,7 +86,7 @@ class ShipmentModel extends Model
 
         // 分頁
         $page = empty($params['page']) ? 1 : (int)$params['page'];
-        log_message('debug',$page);
+        log_message('debug', $page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
@@ -99,5 +99,50 @@ class ShipmentModel extends Model
             'total' => $total,
             'items' => $items
         ];
+    }
+
+    public function getUserInfo(int $shipmentId): ?array
+    {
+        return $this->builder('orders o')
+            ->select('
+            DISTINCT u.u_Name as userName,
+            u.u_Phone as phone
+        ', false)
+            ->join('sub_accounts sa', 'sa.sa_Id = o.o_sa_Id')
+            ->join('users u', 'u.u_Id = sa.sa_u_Id')
+            ->where('o.o_s_Id', $shipmentId)
+            ->get()
+            ->getRowArray();
+    }
+
+    /**
+     * 取得出貨單紀念品統計資訊
+     *
+     * @param integer $shipmentId
+     * @return array
+     */
+    public function getProductDetails(int $shipmentId): array
+    {
+        $items = $this->builder('orders o')
+            ->select('
+            p.p_Name as productName,
+            COUNT(*) as qty,
+            sg.sg_StockCode as stockCode,
+            sg.sg_StockName as stockName
+        ')
+            ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
+            ->join('products p', 'p.p_sg_Id = o.o_sg_Id')
+            ->where('o.o_s_Id', $shipmentId)
+            ->groupBy('p.p_Id')
+            ->get()
+            ->getResultArray();
+
+        return array_map(function ($item) {
+            return [
+                'productName' => $item['productName'],
+                'qty' => (int)$item['qty'],
+                'stock' => sprintf('%s %s', $item['stockCode'], $item['stockName'])
+            ];
+        }, $items);
     }
 }

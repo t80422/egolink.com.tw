@@ -57,15 +57,31 @@ class ShipmentService
         return $this->shipmentModel->getList($params);
     }
 
-    public function getDetail($id)
+    public function getDetail(int $id)
     {
+        // 取得出貨單資訊
         $shipment = $this->shipmentModel->find($id);
 
         if (!$shipment) {
             throw new Exception('找不到指定資料');
         }
 
-        return $shipment;
+        // 取得用戶資訊
+        $userInfo = $this->shipmentModel->getUserInfo($id);
+
+        // 取得紀念品明細
+        $items = $this->shipmentModel->getProductDetails($id);
+
+        return [
+            'id' => $shipment->id,
+            'number' => $shipment->number,
+            'date' => $shipment->date,
+            'memo' => $shipment->memo,
+            'createdAt' => $shipment->createdAt,
+            'userName' => $userInfo['userName'],
+            'phone' => $userInfo['phone'],
+            'items'=>$items
+        ];
     }
 
     public function updateShipment(int $id, array $data)

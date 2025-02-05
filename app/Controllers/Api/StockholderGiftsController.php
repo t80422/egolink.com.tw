@@ -28,7 +28,6 @@ class StockholderGiftsController extends BaseApiController
     {
         try {
             $params = $this->request->getGet();
-            log_message('debug',print_r($params,true));
             $datas = $this->sgSer->getList($params);
 
             return $this->successResponse('', $datas);

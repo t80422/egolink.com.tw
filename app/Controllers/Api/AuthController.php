@@ -37,7 +37,7 @@ class AuthController extends BaseApiController
     }
 
     // 驗證電子郵件
-    public function verifyEmail($token=null)
+    public function verifyEmail($token = null)
     {
         try {
             if (empty($token)) {
@@ -118,7 +118,57 @@ class AuthController extends BaseApiController
 
             return $this->successResponse();
         } catch (Exception $e) {
-            return $this->errorResponse('重置密碼時發生錯誤');
+            return $this->errorResponse('重置密碼時發生錯誤', $e);
+        }
+    }
+
+    // 取得所有功能
+    public function getFeatures()
+    {
+        try {
+            $datas = $this->authSer->getAllFeatures();
+
+            return $this->successResponse('', $datas);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得所有功能失敗', $e);
+        }
+    }
+
+    // 取得角色的功能權限
+    public function getRoleFeatures($roleId = null)
+    {
+        try {
+            if (!$roleId) {
+                return $this->errorResponse('未提供角色Id');
+            }
+
+            $features = $this->authSer->getRoleFeatures($roleId);
+
+            return $this->successResponse('', $features);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得角色的功能權限發生錯誤', $e);
+        }
+    }
+
+    // 更新角色功能權限
+    public function updateRoleFeatures($roleId = null)
+    {
+        try {
+            if (!$roleId) {
+                return $this->errorResponse('未提供角色ID');
+            }
+
+            $featureIds = $this->request->getVar('featureIds');
+
+            if (!is_array($featureIds)) {
+                return $this->errorResponse('無效的功能ID列表');
+            }
+
+            $this->authSer->updateRoleFeatures($roleId, $featureIds);
+
+            return $this->successResponse();
+        } catch (Exception $e) {
+            return $this->errorResponse('更新角色功能權限失敗', $e);
         }
     }
 }

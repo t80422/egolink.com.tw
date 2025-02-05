@@ -176,24 +176,6 @@ class UserModel extends Model
             ->getFirstRow($this->returnType);
     }
 
-    public function initPswReset(string $email): ?User
-    {
-        $user = $this->where('u_Account', $email)->first();
-
-        if (!$user) {
-            return null;
-        }
-
-        if (!$user->verified) {
-            throw new Exception('此帳號尚未完成電子郵件驗證');
-        }
-
-        $resetToken  = $this->generateResetToken();
-        $this->update($user->id, $resetToken);
-
-        return $this->find($user->id);
-    }
-
     public function validateResetToken(string $token): ?User
     {
         return $this->where('u_VerifyToken', $token)
@@ -248,13 +230,5 @@ class UserModel extends Model
                 ->orLike('u.u_Phone', $params['keyword'])
                 ->groupEnd();
         }
-    }
-
-    private function generateResetToken(): array
-    {
-        return [
-            'u_VerifyToken' => bin2hex(random_bytes(32)),
-            'u_VerifyExpires' => date('Y-m-d H:i:s', strtotime('+1 hours'))
-        ];
     }
 }
