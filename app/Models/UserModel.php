@@ -5,7 +5,6 @@ namespace App\Models;
 use CodeIgniter\Model;
 use App\Entities\User;
 use CodeIgniter\Database\BaseBuilder;
-use Exception;
 
 class UserModel extends Model
 {

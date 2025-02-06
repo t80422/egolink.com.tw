@@ -71,6 +71,26 @@ class AuthService
         ];
     }
 
+    /**
+     * E股投登入
+     *
+     * @param string $account
+     * @param string $password
+     * @return boolean
+     */
+    public function login_autoVote(string $account, string $password)
+    {
+        $user = $this->userModel->getByAccount($account);
+
+        if (!$user || !$this->userModel->verifyPassword($password, $user->password)) {
+            throw new Exception('帳號或密碼錯誤');
+        }
+
+        if (!$user->canAutoVote) {
+            throw new Exception('未授權使用E股投');
+        }
+    }
+
     public function verifyEmail(string $token)
     {
         // 取得並驗證用戶資料
@@ -219,7 +239,7 @@ class AuthService
 
         // 驗證功能Id
         $validFeatures = $this->featureModel->getByFeatureIds($featureIds);
-        
+
         if (count($validFeatures) !== count($featureIds)) {
             throw new Exception('包含無效的功能Id');
         }

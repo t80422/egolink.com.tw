@@ -77,11 +77,12 @@ class UserController extends BaseApiController
                 'postalCode' => $this->request->getVar('postalCode'),
                 'address' => $this->request->getVar('address'),
                 'parentId' => $this->request->getVar('groupId'),
+                'canAutoVote' => $this->request->getVar('canAutoVote'),
+                'roleId' => $this->request->getVar('roleId')
             ]);
 
-            $roleId = $this->request->getVar('roleId');
+            $roleId = $data->roleId;
             $data->roleId = $roleId ?? UserModel::ROLE_NOMAL;
-
             $userId = $this->userModel->insert($data);
 
             if (!$userId) {

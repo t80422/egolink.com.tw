@@ -5,9 +5,7 @@ namespace App\Controllers\Api;
 use App\Libraries\AuthService;
 use Exception;
 
-/**
- * 認證
- */
+// 認證
 class AuthController extends BaseApiController
 {
     private $authSer;
@@ -33,6 +31,25 @@ class AuthController extends BaseApiController
             return $this->successResponse('', $result);
         } catch (\Exception $e) {
             return $this->errorResponse('登入時發生錯誤', $e);
+        }
+    }
+
+    // E股投-登入
+    public function login_autoVote()
+    {
+        try {
+            $account = $this->request->getVar('email');
+            $password = $this->request->getVar('password');
+
+            if (empty($account) || empty($password)) {
+                return $this->errorResponse('請輸入帳號和密碼');
+            }
+
+            $this->authSer->login_autoVote($account, $password);
+
+            return $this->successResponse();
+        } catch (Exception $e) {
+            return $this->errorResponse('E股投-登入錯誤', $e);
         }
     }
 

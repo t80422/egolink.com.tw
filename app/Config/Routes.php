@@ -16,9 +16,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->post('request-reset', 'AuthController::requestPasswordReset');
         $routes->post('reset-password/(:segment)', 'AuthController::resetPassword/$1');
         $routes->get('verify-email/(:segment)', 'AuthController::verifyEmail/$1');
-        $routes->get('features', 'AuthController::getFeatures'); // 取得所有功能
-        $routes->get('features/(:num)', 'AuthController::getRoleFeatures/$1'); // 取得角色功能權限
-        $routes->put('features/(:num)', 'AuthController::updateRoleFeatures/$1'); // 更新角色功能權限
     });
 
     // 管理端路由
@@ -96,6 +93,13 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->put('(:num)', 'ShipmentController::edit/$1');
             $routes->delete('(:num)', 'ShipmentController::delete/$1');
         });
+
+        // 權限管理
+        $routes->group('permission', static function ($routes) {
+            $routes->get('/', 'AuthController::getFeatures'); // 取得所有功能
+            $routes->get('(:num)', 'AuthController::getRoleFeatures/$1'); // 取得角色功能權限
+            $routes->put('(:num)', 'AuthController::updateRoleFeatures/$1'); // 更新角色功能權限
+        });
     });
 
     // 客戶端路由
@@ -133,6 +137,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->put('(:num)', 'OrderController::edit/$1');
             $routes->delete('(:num)', 'OrderController::delete/$1');
         });
+    });
+
+    // E股投路由
+    $routes->group('autoVote', static function ($routes) {
+        $routes->post('login', 'AuthController::login_autoVote'); // 登入
     });
 
     // 公開路由
