@@ -20,7 +20,7 @@ class User extends Entity
         'postalCode' => 'u_PostalCode', // 	郵遞區號
         'address' => 'u_Address', // 地址
         'parentId' => 'u_ParentId', // 群組編號
-        'canAutoVote'=>'u_CanAutoVote' // 可否自動投票
+        'canAutoVote' => 'u_CanAutoVote' // 可否自動投票
     ];
 
     public function formatForList(): array
@@ -43,11 +43,11 @@ class User extends Entity
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'locationId'=>$this->locationId,
+            'locationId' => $this->locationId,
             'locationName' => $this->attributes['locationName'],
-            'roleId'=>$this->roleId,
+            'roleId' => $this->roleId,
             'roleName' => $this->attributes['roleName'],
-            'groupId'=>$this->parentId,
+            'groupId' => $this->parentId,
             'groupName' => $this->attributes['parentName'],
             'postalCode' => $this->postalCode,
             'address' => $this->address
@@ -59,6 +59,18 @@ class User extends Entity
         return [
             'value' => $this->id,
             'label' => $this->name
+        ];
+    }
+
+    public function formatForProfile(): array
+    {
+        return [
+            "id" => $this->id,
+            "name" => $this->name,
+            "phone" => $this->phone,
+            "postalCode" => $this->postalCode,
+            "address" => $this->address,
+            "locationId" => $this->locationId
         ];
     }
 }

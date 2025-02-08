@@ -86,9 +86,10 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
 
         // 出貨作業
         $routes->group('shipment', static function ($routes) {
-            $routes->get('/', 'ShipmentController::index');
-            $routes->get('(:num)', 'ShipmentController::detail/$1');
-            $routes->get('orders', 'ShipmentController::getShippableUsers');
+            $routes->get('/', 'ShipmentController::index'); // 列表
+            $routes->get('(:num)', 'ShipmentController::detail/$1'); // 詳細
+            $routes->get('orders', 'ShipmentController::getShippableUsers'); // 取得可出貨會員列表
+            $routes->get('order-summary/(:num)', 'ShipmentController::getOrderSummary/$1'); // 取得用戶的委託紀念品統計
             $routes->post('/', 'ShipmentController::create');
             $routes->put('(:num)', 'ShipmentController::edit/$1');
             $routes->delete('(:num)', 'ShipmentController::delete/$1');
@@ -133,6 +134,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('orders', static function ($routes) {
             $routes->get('/', 'OrderController::index');
             $routes->get('detail', 'OrderController::detail');
+            $routes->get('more-conditions', 'OrderController::getMoreConditions');
             $routes->post('batch', 'OrderController::batchCreate');
             $routes->put('(:num)', 'OrderController::edit/$1');
             $routes->delete('(:num)', 'OrderController::delete/$1');
@@ -142,6 +144,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
     // E股投路由
     $routes->group('autoVote', static function ($routes) {
         $routes->post('login', 'AuthController::login_autoVote'); // 登入
+        $routes->get('(:num)', 'SubAccountController::getAutoVoteAccounts/$1'); // 取得子帳號資訊
+        $routes->post('vote-img/(:num)', 'OrderController::uploadVoteImg/$1'); // 投票圖片上傳
     });
 
     // 公開路由
@@ -152,4 +156,5 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
     $routes->get('news', 'NewsController::index'); // 最新消息列表
     $routes->get('locationOptions', 'LocationController::getOptions'); // 營業據點選單
     $routes->get('qa', 'QAController::index'); // 常見問題列表
+    $routes->get('locations', 'LocationController::index'); // 據點列表
 });

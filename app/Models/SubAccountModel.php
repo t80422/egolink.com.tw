@@ -18,10 +18,7 @@ class SubAccountModel extends Model
         'sa_HIC',
         'sa_HRT',
         'sa_HC',
-        'sa_BOOV',
-        'sa_CDC',
-        'sa_u_Id',
-        'sa_VoucherType'
+        'sa_u_Id'
     ];
 
     protected $validationRules = [
@@ -69,7 +66,7 @@ class SubAccountModel extends Model
         $total = $builder->countAllResults(false);
 
         // 分頁
-        $page = $params['page'] ?? 1;
+        $page = empty($params['page']) ? 1 : $params['page'];
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
@@ -96,5 +93,50 @@ class SubAccountModel extends Model
         return $this->where('sa_u_Id', $userId)
             ->select('sa_Id')
             ->findAll();
+    }
+
+    public function getAutoVoteData(int $userId): array
+    {
+        $result = $this->builder('orders o')
+            ->select('
+            sa.sa_Id,
+            sa.sa_IdCardNum,
+            o.o_Id,
+            sg.sg_StockCode
+        ')
+            ->join('sub_accounts sa', 'sa.sa_Id = o.o_sa_Id')
+            ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
+            ->where([
+                'sa.sa_u_Id' => $userId,
+                'o.o_Status' => 0,
+                'o.o_VoteImg IS NULL' => null
+            ])
+            ->get()
+            ->getResultArray();
+
+        // 重組資料結構
+        $processedAccounts = [];
+
+        foreach ($result as $row) {
+            $saId = $row['sa_Id'];
+
+            // 如果這個子帳號還沒有被處理過
+            if (!isset($processedAccounts[$saId])) {
+                $processedAccounts[$saId] = [
+                    'id' => $saId,
+                    'idCardNum' => $row['sa_IdCardNum'],
+                    'orders' => []
+                ];
+            }
+
+            // 添加委託資訊
+            $processedAccounts[$saId]['orders'][] = [
+                'id' => $row['o_Id'],
+                'stockCode' => $row['sg_StockCode']
+            ];
+        }
+
+        // 轉換成索引陣列
+        return array_values($processedAccounts);
     }
 }

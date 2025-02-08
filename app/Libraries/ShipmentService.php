@@ -80,7 +80,7 @@ class ShipmentService
             'createdAt' => $shipment->createdAt,
             'userName' => $userInfo['userName'],
             'phone' => $userInfo['phone'],
-            'items'=>$items
+            'items' => $items
         ];
     }
 
@@ -126,5 +126,18 @@ class ShipmentService
         }, $result['items']);
 
         return $result;
+    }
+
+    public function getOrderSummary(int $userId): array
+    {
+        $items = $this->orderModel->getProductSummaryByUserId($userId);
+
+        return array_map(function ($item) {
+            return [
+                'stock' => $item['sg_StockCode'] . ' ' . $item['sg_StockName'],
+                'productName' => $item['productName'],
+                'qty' => (int)$item['qty']
+            ];
+        }, $items);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Api;
 
+use App\Entities\StockholderGift;
+use App\Libraries\OrderService;
 use App\Models\OrderModel;
 use App\Models\SubAccountModel;
 use Config\Services;
@@ -13,12 +15,14 @@ class OrderController extends BaseApiController
     protected $ordModel;
     protected $saModel;
     protected $authSer;
+    private $orderSer;
 
     public function __construct()
     {
         $this->ordModel = new OrderModel();
         $this->saModel = new SubAccountModel();
         $this->authSer = Services::auth();
+        $this->orderSer = new OrderService();
     }
 
     // 建立批次委託
@@ -38,8 +42,7 @@ class OrderController extends BaseApiController
                 return $this->errorResponse('沒有可用的子帳號');
             }
 
-            $subAccIds = array_column($subAccs, 'sa_Id');
-
+            $subAccIds = array_column($subAccs, 'id');
             $this->ordModel->batchCreate($sgIds, $subAccIds);
 
             return $this->successResponse();
@@ -52,26 +55,11 @@ class OrderController extends BaseApiController
     public function index()
     {
         try {
-            $params = [
-                'page' => $this->request->getVar('page'),
-                'sortField' => $this->request->getVar('sortField'),
-                'sortOrder' => $this->request->getVar('sortOrder'),
-                'year' => $this->request->getVar('year'),
-                'status' => $this->request->getVar('status'),
-                'documentIds' => $this->request->getVar('documentIds'),
-                'deadlineStart' => $this->request->getVar('deadlineStart'),
-                'deadlineEnd' => $this->request->getVar('deadlineEnd'),
-                'meetingType' => $this->request->getVar('meetingType'),
-                'marketType' => $this->request->getVar('marketType'),
-                'keyword' => $this->request->getVar('keyword')
-            ];
-
+            $params = $this->request->getGet();
             $userId = $this->authSer->getUser()->id;
-            $subAccIds = $this->saModel->where('sa_u_Id', $userId)
-                ->select('sa_Id')
-                ->findAll();
+            $subAccIds = $this->saModel->getIdsByUserId($userId);
 
-            $params['subAccountIds'] = array_column($subAccIds, 'sa_Id');
+            $params['subAccountIds'] = array_column($subAccIds, 'id');
             $result = $this->ordModel->getList($params);
 
             return $this->successResponse('', $result);
@@ -88,6 +76,7 @@ class OrderController extends BaseApiController
             $memo = $this->ordModel->getDetail($id);
 
             return $this->successResponse('', [
+                'id' => $id,
                 'memo' => $memo
             ]);
         } catch (Exception $e) {
@@ -132,6 +121,49 @@ class OrderController extends BaseApiController
             return $this->successResponse();
         } catch (Exception $e) {
             return $this->errorResponse('刪除時發生錯誤', $e);
+        }
+    }
+
+    // 取得更多條件
+    public function getMoreConditions()
+    {
+        try {
+            $options = [];
+            $codeTables = ['meetingType', 'marketType'];
+
+            // 只取需要的選項
+            foreach ($codeTables as $type) {
+                $options[$type] = array_map(function ($code, $name) {
+                    return [
+                        'value' => $code,
+                        'label' => $name
+                    ];
+                }, array_keys(StockholderGift::CODE_TABLES[$type]), array_values(StockholderGift::CODE_TABLES[$type]));
+            }
+
+            return $this->successResponse('', $options);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得更多條件錯誤', $e);
+        }
+    }
+
+    // 投票圖片上傳
+    public function uploadVoteImg($id = null)
+    {
+        try {
+            // 檢查是否有上傳圖片
+            $img = $this->request->getFile('img');
+
+            if (!$img || !$img->isValid()) {
+                return $this->errorResponse('請選擇要上傳的圖片');
+            }
+
+            // 處理圖片上傳
+            $this->orderSer->handleVoteImgUpload((int)$id, $img);
+
+            return $this->successResponse();
+        } catch (Exception $e) {
+            return $this->errorResponse('投票圖片上傳錯誤', $e);
         }
     }
 }

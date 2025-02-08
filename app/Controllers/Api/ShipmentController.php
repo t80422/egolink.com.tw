@@ -90,4 +90,16 @@ class ShipmentController extends BaseApiController
             return $this->errorResponse('取得可出貨會員列表時發生錯誤', $e);
         }
     }
+
+    // 取得用戶的委託紀念品統計
+    public function getOrderSummary($userId = null)
+    {
+        try {
+            $result = $this->shipmentSer->getOrderSummary($userId);
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得用戶的委託紀念品統計錯誤', $e);
+        }
+    }
 }

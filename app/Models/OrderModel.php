@@ -19,7 +19,9 @@ class OrderModel extends Model
         'o_AccountNum',
         'o_Memo',
         'o_s_Id',
-        'o_Date'
+        'o_Date',
+        'o_VoteImg',
+        'o_VoteImgUploadTime'
     ];
 
     public const STATUS = [
@@ -102,7 +104,6 @@ class OrderModel extends Model
             stockholder_gifts.sg_MeetingDate,
             stockholder_gifts.sg_MeetingType,
             sub_accounts.sa_Name,
-            orders.o_StockShares,
             orders.o_Status,
             orders.o_AccountNum,
             orders.o_Memo
@@ -112,7 +113,10 @@ class OrderModel extends Model
 
         // 年分
         if (!empty($params['year'])) {
-            $builder->where('stockholder_gifts.sg_Year', $params['year']);
+            $startDate = $params['year'] . '-01-01';
+            $endDate = $params['year'] . '-12-31';
+            $builder->where('sg_MeetingDate >=', $startDate)
+                ->where('sg_MeetingDate <=', $endDate);
         }
 
         // 狀態
@@ -154,24 +158,8 @@ class OrderModel extends Model
                 ->groupEnd();
         }
 
-        // 排序
-        $sortField = $params['sortField'] ?? 'o_Id';
-        $sortOrder = $params['sortOrder'] ?? 'DESC';
-
-        // 排序欄位定義
-        $sortFieldMap = [
-            'deadlineDate' => 'stockholder_gifts.sg_DeadlineDate',
-            'status' => 'orders.o_Status',
-            'stockCode' => 'stockholder_gifts.sg_StockCode',
-            'accountName' => 'sub_accounts.sa_Name'
-        ];
-
-        if (isset($sortFieldMap[$sortField])) {
-            $builder->orderBy($sortFieldMap[$sortField], $sortOrder);
-        }
-
         // 分頁
-        $page = $params['page'] ?? 1;
+        $page = empty($params['page']) ? 1 : $params['page'];
         $limit = 20;
         $offset = ($page - 1) * $limit;
 
@@ -226,11 +214,11 @@ class OrderModel extends Model
         foreach ($orders as $order) {
             $sgId = $order['o_sg_Id'];
             $orderData = [
+                'o_Id' => $order['o_Id'],
                 'stockCode' => $order['sg_StockCode'],
                 'stockName' => $order['sg_StockName'],
                 'meetingType' => StockholderGift::CODE_TABLES['meetingType'][$order['sg_MeetingType']],
                 'name' => $order['sa_Name'],
-                'stockShares' => $order['o_StockShares'],
                 'status' => self::STATUS[$order['o_Status']],
                 'accountNum' => $order['o_AccountNum'],
                 'memo' => $order['o_Memo'],
@@ -242,10 +230,10 @@ class OrderModel extends Model
         }
 
         return [
-            'items' => $processOrders,
             'total' => $total,
             'page' => $page,
-            'totalPages' => ceil($total / $limit)
+            'totalPages' => ceil($total / $limit),
+            'items' => $processOrders
         ];
     }
 
@@ -255,7 +243,7 @@ class OrderModel extends Model
             ->where('o_Id', $id)
             ->first();
 
-        return $data['o_Memo'] ?? '';
+        return $data->memo ?? '';
     }
 
     /**
@@ -322,7 +310,7 @@ class OrderModel extends Model
     public function getShippableUsers(array $params = []): array
     {
         $builder = $this->db->table('users u')
-            ->select('DISTINCT u.u_Id, u.u_Name, u.u_Phone, l.l_Name',false)
+            ->select('DISTINCT u.u_Id, u.u_Name, u.u_Phone, l.l_Name', false)
             ->join('sub_accounts sa', 'sa.sa_u_Id = u.u_Id')
             ->join('orders o', 'o.o_sa_Id = sa.sa_Id')
             ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
@@ -364,5 +352,27 @@ class OrderModel extends Model
             'totalPages' => ceil($total / $limit),
             'items' => $items
         ];
+    }
+
+    public function getProductSummaryByUserId(int $userId): array
+    {
+        return $this->builder('orders o')
+            ->select('
+            sg.sg_StockCode,
+            sg.sg_StockName,
+            p.p_Name as productName,
+            COUNT(*) as qty
+        ')
+            ->join('sub_accounts sa', 'sa.sa_Id = o.o_sa_Id')
+            ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
+            ->join('products p', 'p.p_sg_Id = sg.sg_Id')
+            ->where([
+                'sa.sa_u_Id' => $userId,
+                'o.o_Status' => 2
+            ])
+            ->groupBy('sg.sg_Id, p.p_Id')
+            ->orderBy('sg.sg_StockCode')
+            ->get()
+            ->getResultArray();
     }
 }

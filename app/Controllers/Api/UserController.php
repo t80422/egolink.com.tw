@@ -77,9 +77,14 @@ class UserController extends BaseApiController
                 'postalCode' => $this->request->getVar('postalCode'),
                 'address' => $this->request->getVar('address'),
                 'parentId' => $this->request->getVar('groupId'),
-                'canAutoVote' => $this->request->getVar('canAutoVote'),
                 'roleId' => $this->request->getVar('roleId')
             ]);
+
+            // 處理 canAutoVote 欄位
+            $data->canAutoVote = $this->handleCanAutoVoteField(
+                $this->request->getVar('canAutoVote'),
+                null
+            );
 
             $roleId = $data->roleId;
             $data->roleId = $roleId ?? UserModel::ROLE_NOMAL;
@@ -119,6 +124,12 @@ class UserController extends BaseApiController
             $user->postalCode = $this->request->getVar('postalCode');
             $user->address = $this->request->getVar('address');
             $user->parentId = $this->request->getVar('groupId');
+
+            // 處理 canAutoVote 欄位
+            $user->canAutoVote = $this->handleCanAutoVoteField(
+                $this->request->getVar('canAutoVote'),
+                $user->canAutoVote
+            );
 
             $this->userModel->update($id, $user);
 
@@ -182,21 +193,17 @@ class UserController extends BaseApiController
     {
         try {
             $currentUser = $this->authService->getUser();
-            $user = $this->userModel->find($currentUser->id);
+
+            /**
+             * @var User|null $user
+             */
+            $user =$this->userModel->find($currentUser->id);
 
             if (!$user) {
                 return $this->errorResponse('無法取得個人資料');
             }
 
-            $data = [
-                'name' => $user['u_Name'],
-                'phone' => $user['u_Phone'],
-                'postalCode' => $user['u_PostalCode'],
-                'address' => $user['u_Address'],
-                'locationId' => $user['u_l_Id']
-            ];
-
-            return $this->successResponse('', $data);
+            return $this->successResponse('', $user->formatForProfile());
         } catch (\Exception $e) {
             return $this->errorResponse('取得個人資料時發生錯誤', $e);
         }
@@ -241,7 +248,7 @@ class UserController extends BaseApiController
             }
 
             // 驗證舊密碼
-            if (!$this->userModel->verifyPassword($oldPassword, $user['u_Password'])) {
+            if (!$this->userModel->verifyPassword($oldPassword, $user->password)) {
                 return $this->errorResponse('舊密碼不正確');
             }
 
@@ -281,5 +288,27 @@ class UserController extends BaseApiController
         } catch (Exception $e) {
             return $this->errorResponse('取得群組帳號時發生錯誤', $e);
         }
+    }
+
+    /**
+     * 處理 canAutoVote 欄位的權限判斷
+     * 
+     * @param mixed $newValue 新的值
+     * @param bool|null $currentValue 當前值(修改時使用)
+     * @return bool
+     */
+    private function handleCanAutoVoteField($newValue, ?bool $currentValue): bool
+    {
+        $currentUser = $this->authService->getUser();
+
+        // 如果不是系統管理員
+        if ($currentUser->role !== "1") {
+            // 如果是新增，返回預設值 false
+            // 如果是修改，返回原本的值
+            return $currentValue ?? false;
+        }
+
+        // 系統管理員可以自由設定值
+        return (bool) $newValue;
     }
 }

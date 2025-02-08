@@ -14,7 +14,9 @@ class Order extends Entity
         'accountNum' => 'o_AccountNum',
         'memo' => 'o_Memo',
         'date' => 'o_Date',
-        'sId' => 'o_sh_Id'
+        'sId' => 'o_sh_Id',
+        'voteImg' => 'o_VoteImg', // 投票圖片
+        'voteImgUploadTime' => 'o_VoteImgUploadTime' // 投票圖片上傳時間
     ];
 
     public const STATUS_INCOMPLETE = 0;
@@ -57,5 +59,33 @@ class Order extends Entity
             'phone' => $this->attributes['u_Phone'],
             'location' => $this->attributes['l_Name'],
         ];
+    }
+
+    /**
+     * 檢查是否可以上傳投票圖片
+     * 只有缺件狀態的委託才能上傳
+     *
+     * @return boolean
+     */
+    public function canUploadVoteImg(): bool
+    {
+        return $this->status === self::STATUS_INCOMPLETE;
+    }
+
+    public function setVoteImg(string $imgName)
+    {
+        $this->voteImg = $imgName;
+        $this->voteImgUploadTime = date('Y-m-d H:i:s');
+    }
+
+    /**
+     * 更新為待出貨狀態
+     * 當符合文件方案時呼叫此方法
+     *
+     * @return void
+     */
+    public function markAsPending()
+    {
+        $this->status = self::STATUS_PENDING;
     }
 }

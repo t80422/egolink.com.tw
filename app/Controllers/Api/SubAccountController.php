@@ -148,4 +148,20 @@ class SubAccountController extends BaseApiController
             return $this->errorResponse('取得列表時發生錯誤', $e);
         }
     }
+
+    // 取得用戶的子帳號及待投票股票資訊
+    public function getAutoVoteAccounts($userId = null)
+    {
+        try {
+            if (!$userId) {
+                return $this->errorResponse('無效的用戶ID');
+            }
+
+            $result = $this->saSer->getAutoVoteSubAccounts((int)$userId);
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得用戶的子帳號及待投票股票資訊 錯誤', $e);
+        }
+    }
 }

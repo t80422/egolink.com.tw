@@ -41,7 +41,7 @@ class SubAccountService
 
         $subAccount->fill($data);
 
-        $this->saModel->update($id,$subAccount);
+        $this->saModel->update($id, $subAccount);
     }
 
     public function deleteSubAccount(int $id)
@@ -81,5 +81,12 @@ class SubAccountService
         }
 
         return $subAccount;
+    }
+
+    public function getAutoVoteSubAccounts(int $userId): array
+    {
+        $datas = $this->saModel->getAutoVoteData($userId);
+
+        return $datas;
     }
 }

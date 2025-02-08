@@ -16,10 +16,7 @@ class SubAccount extends Entity
         'drivingLicense' => 'sa_DrivingLicense', // 駕照
         'hrt' => 'sa_HRT', // 戶籍謄本
         'hc' => 'sa_HC', // 戶口名簿
-        'boov' => 'sa_BOOV', // 券商網路下單憑證
-        'cdc' => 'sa_CDC', // 自然人憑證
-        'userId' => 'sa_u_Id', // 會員編號
-        'voucherType' => 'sa_VoucherType' // 電投憑證種類
+        'userId' => 'sa_u_Id' // 會員編號
     ];
 
     public function formatForList(): array
@@ -36,8 +33,6 @@ class SubAccount extends Entity
             'hic' => (bool)$this->hic,
             'hrt' => (bool)$this->hrt,
             'hc' => (bool)$this->hc,
-            'boov' => $this->boov,
-            'cdc' => $this->cdc,
             'owner' => $this->attributes['ownerName'] ?? null
         ];
     }
@@ -65,6 +60,26 @@ class SubAccount extends Entity
         $result['hc'] = (bool) $this->hc;
 
         return $result;
+    }
+
+    public function formatForAutoVote(): array
+    {
+        $orders = [];
+
+        if(isset($this->attributes['orders'])){
+            foreach($this->attributes['orders'] as $order){
+                $orders[]=[
+                    'id'=>$order['o_Id'],
+                    'stockCode'=>$order['sg_StockCode']
+                ];
+            }
+        }
+
+        return [
+            'id' => $this->id,
+            'idCardNum' => $this->idCardNum,
+            'orders' => $orders
+        ];
     }
 
     private function getMaskedIdCardNum(): string
