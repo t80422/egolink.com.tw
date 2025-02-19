@@ -26,7 +26,6 @@ class SubAccountController extends BaseApiController
                 'name' => $this->request->getVar('name'),
                 'idCardNum' => $this->request->getVar('idCardNum'),
                 'memo' => $this->request->getVar('memo'),
-                'voucherType' => $this->request->getVar('voucherType'),
                 'userId' => $this->authSer->getUser()->id
             ];
 

@@ -23,7 +23,7 @@ class FeatureAuthFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         try {
-            // 從當前用戶取得角色Id
+            // 從當前用戶取得角色
             $user = $this->authSer->getUser();
 
             if (!$user) {

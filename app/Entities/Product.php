@@ -75,4 +75,21 @@ class Product extends Entity
     public function getAvailableStock():int{
         return $this->qty -$this->outBoundQty;
     }
+
+    public function formatForDetail(): array 
+    {
+        $stockInfo=$this->getStockInfo();
+
+        return [
+            'id' => $this->id,
+            'stock' => $stockInfo['code'] . ' ' . $stockInfo['name'],
+            'name' => $this->name,
+            'img' => $this->getImgUrl(),
+            'qty' => $this->qty,
+            'creator' => $this->getCreator(),
+            'createdAt' => $this->createdAt,
+            'updater' => $this->getUpdater(),
+            'updatedAt' => $this->updatedAt
+        ];
+    }
 }

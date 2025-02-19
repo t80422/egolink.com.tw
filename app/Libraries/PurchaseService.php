@@ -5,19 +5,14 @@ namespace App\Libraries;
 use App\Entities\Product;
 use App\Entities\Purchase;
 use App\Entities\PurchaseDetail;
-use App\Entities\StockholderGift;
 use App\Models\ProductModel;
 use App\Models\PurchaseDetailModel;
 use App\Models\PurchaseModel;
-use App\Models\StockholderGiftsModel;
 use CodeIgniter\Validation\Exceptions\ValidationException;
-use Config\Services;
 use Exception;
-use RuntimeException;
 
 class PurchaseService
 {
-    private $sgModel;
     private $productModel;
     private $purchaseModel;
     private $pdModel;
@@ -25,35 +20,10 @@ class PurchaseService
 
     public function __construct()
     {
-        $this->sgModel = new StockholderGiftsModel();
         $this->productModel = new ProductModel();
         $this->purchaseModel = new PurchaseModel();
         $this->pdModel = new PurchaseDetailModel();
         $this->productSer = new ProductService();
-    }
-
-    /**
-     * 取得股東會資訊選單
-     *
-     * @return array
-     */
-    public function getSGOptions(): array
-    {
-        $datas = $this->sgModel->getByYear(date("Y"));
-
-        return array_map(function (StockholderGift $data) {
-            return $data->formatforOption();
-        }, $datas);
-    }
-
-    public function getProducts(int $sgId): array
-    {
-
-        $datas = $this->productModel->getBySGId($sgId);
-
-        return array_map(function (Product $data) {
-            return $data->formatForOptions();
-        }, $datas);
     }
 
     public function createPurchase(array $requestData)

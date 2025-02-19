@@ -75,23 +75,19 @@ class StockholderGiftsModel extends Model
         return $options;
     }
 
-    public function getDetail($id)
-    {
-        $builder = $this->buildBaseQuery();
-        $builder->where('stockholder_gifts.sg_Id', $id);
-
-        return $builder->get()->getRowArray();
-    }
-
     /**
      * 檢查重複的股號
      *
      * @param string $stockCode
      * @return boolean
      */
-    public function checkDuplicateStockCode($stockCode): bool
+    public function checkDuplicateStockCode(string $stockCode, string $meetingDate): bool
     {
-        return $this->where('sg_StockCode', $stockCode)->countAllResults() > 0;
+        $year = date('Y', strtotime($meetingDate));
+
+        return $this->where('sg_StockCode', $stockCode)
+            ->where("YEAR(sg_MeetingDate) = $year", null, false)
+            ->countAllResults() > 0;
     }
 
     public function getHistoricalGifts($stockCode)
@@ -152,11 +148,11 @@ class StockholderGiftsModel extends Model
 
         // 更新日期
         if (!empty($params['updateDateStart'])) {
-            $builder->where('sg_UpdateedAt >=', $params['updateDateStart']);
+            $builder->where('sg_UpdatedAt >=', $params['updateDateStart']);
         }
 
         if (!empty($params['updateDateEnd'])) {
-            $builder->where('sg_UpdateedAt <=', $params['updateDateEnd']);
+            $builder->where('sg_UpdatedAt <=', $params['updateDateEnd']);
         }
 
         // 最後買進日

@@ -120,7 +120,7 @@ class ProductModel extends Model
 
         return $this->set('p_OutboundQty', "p_OutboundQty + {$qty}", false);
     }
-
+    
     private function baseBuilder()
     {
         return $this->builder('products p')

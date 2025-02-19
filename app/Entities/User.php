@@ -41,16 +41,13 @@ class User extends Entity
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email' => $this->email,
             'phone' => $this->phone,
             'locationId' => $this->locationId,
-            'locationName' => $this->attributes['locationName'],
             'roleId' => $this->roleId,
-            'roleName' => $this->attributes['roleName'],
             'groupId' => $this->parentId,
-            'groupName' => $this->attributes['parentName'],
             'postalCode' => $this->postalCode,
-            'address' => $this->address
+            'address' => $this->address,
+            'canAutoVote' => $this->canAutoVote
         ];
     }
 

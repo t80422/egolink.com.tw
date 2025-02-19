@@ -42,8 +42,7 @@ class StockholderGiftsController extends BaseApiController
         try {
             $options = $this->sgModel->getOptions();
 
-            // 取得文件選項
-            $options['documents'] = $this->docModel->getOptions();
+            $options['documents'] = $this->sgSer->getDocumentOptions();
 
             return $this->successResponse('', $options);
         } catch (\Exception $e) {
@@ -57,23 +56,23 @@ class StockholderGiftsController extends BaseApiController
         try {
             $this->sgModel->transStart();
 
-            $data = $this->getRequestData();
+            $data = $this->request->getJSON(true);
+            $stock = new StockholderGift();
+            $stock->fill($data);
 
-            if ($this->sgModel->checkDuplicateStockCode($data['sg_StockCode'])) {
+            if ($this->sgModel->checkDuplicateStockCode($stock->stockCode, $stock->meetingDate)) {
                 return $this->errorResponse('重複的股號');
             }
 
-            $sgId = $this->sgModel->insert($data);
+            $sgId = $this->sgModel->insert($stock);
 
             if (!$sgId) {
                 throw new \Exception('新增股東會資訊失敗');
             }
 
             // 處理文件組合
-            $combinations = json_decode($this->request->getBody(), true)['combinations'] ?? null;
-
-            if (!empty($combinations) && is_array($combinations)) {
-                $this->docModel->createCombinations($sgId, $combinations);
+            if (!empty($data['combinations']) && is_array($data['combinations'])) {
+                $this->docModel->createCombinations($sgId, $data['combinations']);
             }
 
             $this->sgModel->transComplete();
@@ -90,13 +89,7 @@ class StockholderGiftsController extends BaseApiController
     public function detail($id)
     {
         try {
-            $data = $this->sgModel->getDetail($id);
-
-            if (!$data) {
-                return $this->errorResponse('找不到對象');
-            }
-
-            $result = $this->formatData($data, true);
+            $result = $this->sgSer->getDetail((int)$id);
 
             return $this->successResponse('', $result);
         } catch (\Exception $e) {
@@ -178,6 +171,18 @@ class StockholderGiftsController extends BaseApiController
         }
     }
 
+    // 取得股票選單
+    public function getSGOptions()
+    {
+        try {
+            $result = $this->sgSer->getSGOptions();
+
+            return $this->successResponse('', $result);
+        } catch (\Exception $e) {
+            return $this->errorResponse('取得初始資料時發生錯誤', $e);
+        }
+    }
+
 
     private function getRequestData()
     {
@@ -197,44 +202,5 @@ class StockholderGiftsController extends BaseApiController
             'sg_VotingDateStart' => $this->request->getVar('votingDateStart'),
             'sg_VotingDateEnd' => $this->request->getVar('votingDateEnd'),
         ];
-    }
-
-    private function formatData($items, bool $isSingle = false)
-    {
-        // 如果是單一紀錄,轉成陣列
-        if ($isSingle) {
-            $items = [$items];
-        }
-
-        $allIds = array_column($items, 'sg_Id');
-        $allCombinations = $this->docModel->getDocCombinsBySGIds($allIds);
-        $codeTables = StockholderGift::CODE_TABLES;
-
-        $result = array_map(function ($item) use ($allCombinations, $codeTables) {
-            $formattedItem = [
-                'id' => $item['sg_Id'],
-                'stockCode' => $item['sg_StockCode'],
-                'stockName' => $item['sg_StockName'],
-                'meetingDate' => $item['sg_MeetingDate'],
-                'meetingType' => $codeTables['meetingType'][$item['sg_MeetingType']],
-                'giftName' => $item['p_Name'] ?? null,
-                'giftImage' => !empty($item['p_Image']) ? base_url('upload/gifts/' . $item['p_Image']) : null,
-                'stockPrice' => $item['sg_StockPrice'],
-                'priceChange' => $item['sg_PriceChange'],
-                'lastBuyDate' => $item['sg_LastBuyDate'],
-                'deadlineDate' => $item['sg_DeadlineDate'],
-                'marketType' => $codeTables['marketType'][$item['sg_MarketType']],
-                'serviceAgent' => $item['sg_ServiceAgent'],
-                'phone' => $item['sg_Phone'],
-                'votingDateStart' => $item['sg_VotingDateStart'],
-                'votingDateEnd' => $item['sg_VotingDateEnd'],
-                'updateDate' => (new \DateTime($item['sg_UpdatedAt']))->format('Y-m-d'),
-                'documentCombinations' => $allCombinations[$item['sg_Id']] ?? []
-            ];
-
-            return $formattedItem;
-        }, $items);
-
-        return $isSingle ? $result[0] : $result;
     }
 }

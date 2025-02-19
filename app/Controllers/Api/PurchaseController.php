@@ -113,36 +113,4 @@ class PurchaseController extends BaseApiController
             return $this->errorResponse('刪除時發生錯誤', $e);
         }
     }
-
-    // 取得股票選單
-    public function getSGOptions()
-    {
-        try {
-            $result = $this->purchaseSer->getSGOptions();
-
-            return $this->successResponse('', $result);
-        } catch (Exception $e) {
-            return $this->errorResponse('取得初始資料時發生錯誤', $e);
-        }
-    }
-
-    // 取得紀念品
-    public function getProductOptions()
-    {
-        try {
-            $sgId = $this->request->getVar('sgId');
-            $result = $this->purchaseSer->getProducts($sgId);
-
-            return $this->successResponse('', $result);
-        } catch (Exception $e) {
-            return $this->errorResponse('取得紀念品時發生錯誤', $e);
-        }
-    }
-
-    private function validateRequest($data)
-    {
-        if (empty($data['pu_Date'])) {
-            throw new Exception('日期為必填');
-        }
-    }
 }

@@ -82,9 +82,9 @@ class InventoryLogModel extends Model
             $keyword = $params['keyword'];
             $builder->groupStart()
                 ->like('u_Name', $keyword)
-                ->orLike('stockCode', $keyword)
-                ->orLike('stockName', $keyword)
-                ->orLike('productName', $keyword)
+                ->orLike('sg_StockCode', $keyword)
+                ->orLike('sg_StockName', $keyword)
+                ->orLike('p_Name', $keyword)
                 ->groupEnd();
         }
 

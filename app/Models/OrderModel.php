@@ -95,21 +95,23 @@ class OrderModel extends Model
      */
     public function getList($params = []): array
     {
-        $builder = $this->builder();
-        $builder->select('
-            orders.o_Id,
-            orders.o_sg_Id,
-            stockholder_gifts.sg_StockCode,
-            stockholder_gifts.sg_StockName,
-            stockholder_gifts.sg_MeetingDate,
-            stockholder_gifts.sg_MeetingType,
-            sub_accounts.sa_Name,
-            orders.o_Status,
-            orders.o_AccountNum,
-            orders.o_Memo
-        ')
-            ->join('stockholder_gifts', 'stockholder_gifts.sg_Id = orders.o_sg_Id')
-            ->join('sub_accounts', 'sub_accounts.sa_Id = orders.o_sa_Id');
+        $builder = $this->builder('orders o')
+            ->select('
+                o.o_Id,
+                o.o_sg_Id,
+                sg.sg_StockCode,
+                sg.sg_StockName,
+                sg.sg_MeetingDate,
+                sg.sg_MeetingType,
+                sa.sa_Name,
+                o.o_Status,
+                o.o_AccountNum,
+                o.o_Memo,
+                s.s_Number
+            ')
+            ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
+            ->join('sub_accounts sa', 'sa.sa_Id = o.o_sa_Id')
+            ->join('shipments s', 's.s_Id = o.o_s_Id', 'left');
 
         // 年分
         if (!empty($params['year'])) {
@@ -121,7 +123,7 @@ class OrderModel extends Model
 
         // 狀態
         if (isset($params['status'])) {
-            $builder->where('orders.o_Status', $params['status']);
+            $builder->where('o_Status', $params['status']);
         }
 
         // 繳交
@@ -133,34 +135,34 @@ class OrderModel extends Model
 
         // 代領截止日
         if (!empty($params['deadlineDateStart'])) {
-            $builder->where('stockholder_gifts.sg_DeadlineDate >=', $params['deadlineDateStart']);
+            $builder->where('sg_DeadlineDate >=', $params['deadlineDateStart']);
         }
 
         if (!empty($params['deadlineDateEnd'])) {
-            $builder->where('stockholder_gifts.sg_DeadlineDate <=', $params['deadlineDateEnd']);
+            $builder->where('sg_DeadlineDate <=', $params['deadlineDateEnd']);
         }
 
         // 開會性質
         if (isset($params['meetingType'])) {
-            $builder->where('stockholder_gifts.sg_MeetingType', $params['meetingType']);
+            $builder->where('sg_MeetingType', $params['meetingType']);
         }
 
         // 市場別
         if (isset($params['marketType'])) {
-            $builder->where('stockholder_gifts.sg_MarketType', $params['marketType']);
+            $builder->where('sg_MarketType', $params['marketType']);
         }
 
         // 關鍵字
         if (!empty($params['keyword'])) {
             $builder->groupStart()
-                ->like('stockholder_gifts.sg_StockName', $params['keyword'])
-                ->orLike('stockholder_gifts.sg_StockCode', $params['keyword'])
+                ->like('sg_StockName', $params['keyword'])
+                ->orLike('sg_StockCode', $params['keyword'])
                 ->groupEnd();
         }
 
         // 分頁
         $page = empty($params['page']) ? 1 : $params['page'];
-        $limit = 20;
+        $limit = 1;
         $offset = ($page - 1) * $limit;
 
         $builder->limit($limit, $offset);
@@ -214,14 +216,16 @@ class OrderModel extends Model
         foreach ($orders as $order) {
             $sgId = $order['o_sg_Id'];
             $orderData = [
-                'o_Id' => $order['o_Id'],
+                'id' => $order['o_Id'],
                 'stockCode' => $order['sg_StockCode'],
                 'stockName' => $order['sg_StockName'],
+                'meetingDate' => $order['sg_MeetingDate'],
                 'meetingType' => StockholderGift::CODE_TABLES['meetingType'][$order['sg_MeetingType']],
                 'name' => $order['sa_Name'],
                 'status' => self::STATUS[$order['o_Status']],
                 'accountNum' => $order['o_AccountNum'],
                 'memo' => $order['o_Memo'],
+                'shipmentNumber' => $order['s_Number'],
                 'docCombine' => isset($docMap[$sgId])
                     ? array_values($docMap[$sgId])
                     : []
@@ -340,7 +344,7 @@ class OrderModel extends Model
 
         $total = $builder->countAllResults(false);
         $page = empty($params['page']) ? 1 : (int)$params['page'];
-        $limit = 20;
+        $limit = 1;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
             ->get()
@@ -354,25 +358,47 @@ class OrderModel extends Model
         ];
     }
 
-    public function getProductSummaryByUserId(int $userId): array
+    public function getProductSummaryByUserId(int $userId, ?int $inputPage = null): array
     {
-        return $this->builder('orders o')
+        $builder = $this->builder('orders o')
             ->select('
-            sg.sg_StockCode,
-            sg.sg_StockName,
-            p.p_Name as productName,
-            COUNT(*) as qty
-        ')
+                sg.sg_Id,
+                sg.sg_StockCode,
+                sg.sg_StockName,
+                p.p_Name as productName,
+                COUNT(*) as qty
+            ')
             ->join('sub_accounts sa', 'sa.sa_Id = o.o_sa_Id')
             ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
             ->join('products p', 'p.p_sg_Id = sg.sg_Id')
             ->where([
                 'sa.sa_u_Id' => $userId,
-                'o.o_Status' => 2
+                'o.o_Status' => Order::STATUS_PENDING
             ])
-            ->groupBy('sg.sg_Id, p.p_Id')
-            ->orderBy('sg.sg_StockCode')
+            ->groupBy('sg.sg_Id, sg.sg_StockCode, sg.sg_StockName, p.p_Name')
+            ->orderBy('sg.sg_StockCode', 'ASC');
+
+        $total = $builder->countAllResults(false);
+        $page = max(1, $inputPage ?? 1);
+        $limit = 1;
+        $offset = ($page - 1) * $limit;
+        $items = $builder->limit($limit, $offset)
             ->get()
             ->getResultArray();
+
+        $formattedItems = array_map(function ($item) {
+            return [
+                'stock' => $item['sg_StockCode'] . ' ' . $item['sg_StockName'],
+                'productName' => $item['productName'],
+                'qty' => (int)$item['qty']
+            ];
+        }, $items);
+
+        return [
+            'total' => $total,           // 總紀念品種類數
+            'page' => $page,             // 當前頁碼
+            'totalPages' => ceil($total / $limit),  // 總頁數
+            'items' => $formattedItems   // 本頁的紀念品清單
+        ];
     }
 }

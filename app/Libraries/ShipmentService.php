@@ -128,16 +128,8 @@ class ShipmentService
         return $result;
     }
 
-    public function getOrderSummary(int $userId): array
+    public function getOrderSummary(int $userId,?int $page=null): array
     {
-        $items = $this->orderModel->getProductSummaryByUserId($userId);
-
-        return array_map(function ($item) {
-            return [
-                'stock' => $item['sg_StockCode'] . ' ' . $item['sg_StockName'],
-                'productName' => $item['productName'],
-                'qty' => (int)$item['qty']
-            ];
-        }, $items);
+        return $this->orderModel->getProductSummaryByUserId($userId,$page);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Entities\Document;
 use CodeIgniter\Model;
 
 /**
@@ -11,6 +12,7 @@ class DocumentModel extends Model
 {
     protected $table = 'documents';
     protected $primaryKey = 'd_Id';
+    protected $returnType = Document::class;
     protected $allowedFields = ['d_Name'];
 
     public function getDocCombinsBySGIds(array $sgIds): array
@@ -84,18 +86,6 @@ class DocumentModel extends Model
                     ]);
             }
         }
-    }
-
-    public function getOptions(): array
-    {
-        $datas = $this->findAll();
-
-        return array_map(function ($data) {
-            return [
-                'value' => $data['d_Id'],
-                'label' => $data['d_Name']
-            ];
-        }, $datas);
     }
 
     /**

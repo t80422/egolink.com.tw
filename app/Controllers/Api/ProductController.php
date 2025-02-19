@@ -105,4 +105,16 @@ class ProductController extends BaseApiController
             return $this->errorResponse('取得異動列表時發生錯誤', $e);
         }
     }
+
+    // 取得紀念品
+    public function getProductOptions($sgId=null)
+    {
+        try {
+            $result = $this->productSer->getProducts((int)$sgId);
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得紀念品時發生錯誤', $e);
+        }
+    }
 }

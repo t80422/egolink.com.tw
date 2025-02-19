@@ -36,6 +36,16 @@ class UserModel extends Model
 
     protected $returnType = User::class;
 
+    protected $validationRules = [
+        'u_Phone' => 'required'
+    ];
+
+    protected $validationMessages = [
+        'u_Phone' => [
+            'required'   => '手機為必填欄位'
+        ]
+    ];
+    
     public const ROLE_ADMIN = 1;
     public const ROLE_LOCATION = 2;
     public const ROLE_GROUP = 3;
@@ -218,8 +228,8 @@ class UserModel extends Model
         }
 
         // 群組帳號
-        if(!empty($params['groupId'])){
-            $builder->where('u.u_ParentId',$params['groupId']);
+        if (!empty($params['groupId'])) {
+            $builder->where('u.u_ParentId', $params['groupId']);
         }
 
         // 關鍵字

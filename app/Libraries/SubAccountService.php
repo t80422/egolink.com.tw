@@ -22,9 +22,10 @@ class SubAccountService
             throw new Exception('此身份證字號已存在');
         }
 
-        $subAccount = new SubAccount(array_merge($data));
-
-        $this->saModel->insert($subAccount);
+        $subAccount = new SubAccount($data);
+        if(!$this->saModel->insert($subAccount)){
+            throw new Exception('新增失敗');
+        }
     }
 
     public function updateSubAccount(int $id, array $data, ?int $userId = null)

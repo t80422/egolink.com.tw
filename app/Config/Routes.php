@@ -67,8 +67,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('purchase', static function ($routes) {
             $routes->get('/', 'PurchaseController::index');
             $routes->get('(:num)', 'PurchaseController::detail/$1');
-            $routes->get('stockOpions', 'PurchaseController::getSGOptions');
-            $routes->get('productOptions', 'PurchaseController::getProductOptions');
             $routes->post('/', 'PurchaseController::create');
             $routes->put('(:num)', 'PurchaseController::edit/$1');
             $routes->delete('(:num)', 'PurchaseController::delete/$1');
@@ -101,6 +99,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->get('(:num)', 'AuthController::getRoleFeatures/$1'); // 取得角色功能權限
             $routes->put('(:num)', 'AuthController::updateRoleFeatures/$1'); // 更新角色功能權限
         });
+
+        // 股東會資訊
+        $routes->group('stock', static function ($routes) {
+            $routes->post('/', 'StockholderGiftsController::create');
+        });
     });
 
     // 客戶端路由
@@ -115,7 +118,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         // 股東會資訊
         $routes->group('stockholderGifts', static function ($routes) {
             $routes->get('(:num)', 'StockholderGiftsController::detail/$1');
-            $routes->post('/', 'StockholderGiftsController::create');
             $routes->put('(:num)', 'StockholderGiftsController::edit/$1');
             $routes->delete('(:num)', 'StockholderGiftsController::delete/$1');
         });
@@ -134,7 +136,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
         $routes->group('orders', static function ($routes) {
             $routes->get('/', 'OrderController::index');
             $routes->get('detail', 'OrderController::detail');
-            $routes->get('more-conditions', 'OrderController::getMoreConditions');
+            $routes->get('conditions', 'OrderController::getConditions');
             $routes->post('batch', 'OrderController::batchCreate');
             $routes->put('(:num)', 'OrderController::edit/$1');
             $routes->delete('(:num)', 'OrderController::delete/$1');
@@ -157,4 +159,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
     $routes->get('locationOptions', 'LocationController::getOptions'); // 營業據點選單
     $routes->get('qa', 'QAController::index'); // 常見問題列表
     $routes->get('locations', 'LocationController::index'); // 據點列表
+    $routes->get('stockOpions', 'StockholderGiftsController::getSGOptions'); // 股東會選項
+    $routes->get('productOptions/(:num)', 'ProductController::getProductOptions/$1'); // 紀念品選項
 });

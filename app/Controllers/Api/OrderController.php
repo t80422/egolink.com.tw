@@ -2,7 +2,6 @@
 
 namespace App\Controllers\Api;
 
-use App\Entities\StockholderGift;
 use App\Libraries\OrderService;
 use App\Models\OrderModel;
 use App\Models\SubAccountModel;
@@ -125,21 +124,10 @@ class OrderController extends BaseApiController
     }
 
     // 取得更多條件
-    public function getMoreConditions()
+    public function getConditions()
     {
         try {
-            $options = [];
-            $codeTables = ['meetingType', 'marketType'];
-
-            // 只取需要的選項
-            foreach ($codeTables as $type) {
-                $options[$type] = array_map(function ($code, $name) {
-                    return [
-                        'value' => $code,
-                        'label' => $name
-                    ];
-                }, array_keys(StockholderGift::CODE_TABLES[$type]), array_values(StockholderGift::CODE_TABLES[$type]));
-            }
+            $options = $this->orderSer->getConditions();
 
             return $this->successResponse('', $options);
         } catch (Exception $e) {

@@ -95,7 +95,8 @@ class ShipmentController extends BaseApiController
     public function getOrderSummary($userId = null)
     {
         try {
-            $result = $this->shipmentSer->getOrderSummary($userId);
+            $page=$this->request->getVar('page');
+            $result = $this->shipmentSer->getOrderSummary($userId,(int)$page);
 
             return $this->successResponse('', $result);
         } catch (Exception $e) {

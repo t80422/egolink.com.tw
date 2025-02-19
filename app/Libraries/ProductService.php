@@ -86,22 +86,12 @@ class ProductService
     public function getDetail(int $id): array
     {
         $data = $this->productModel->getDetail($id);
-
+    
         if (!$data) {
             throw new Exception('找不到指定資料');
         }
-
-        return [
-            'id' => $data->id,
-            'sgId' => $data->sgId,
-            'name' => $data->name,
-            'img' => $data->getImgUrl(),
-            'qty' => $data->qty,
-            'creator' => $data->getCreator(),
-            'createdAt' => $data->createdAt,
-            'updater' => $data->getUpdater(),
-            'updatedAt' => $data->updatedAt
-        ];
+    
+        return $data->formatForDetail();
     }
 
     public function updateProduct(int $id, array $data, ?UploadedFile $img, int $userId)
@@ -242,6 +232,16 @@ class ProductService
         if (!$this->iLogModel->insert($logData)) {
             throw new Exception('新增異動紀錄失敗');
         }
+    }
+
+    public function getProducts(int $sgId): array
+    {
+
+        $datas = $this->productModel->getBySGId($sgId);
+
+        return array_map(function (Product $data) {
+            return $data->formatForOptions();
+        }, $datas);
     }
 
     /**

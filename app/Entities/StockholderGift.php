@@ -47,7 +47,7 @@ class StockholderGift extends Entity
         'stockName' => 'sg_StockName',
         'meetingDate' => 'sg_MeetingDate',
         'meetingType' => 'sg_MeetingType',
-        'giftStatus' => 'sg_GiftStatus',
+        'giftStatus' => 'sg_GiftStatus', // 紀念品狀態(0:無發放、1:未決定、2:票券、3:禮品)	
         'stockPrice' => 'sg_StockPrice',
         'priceChange' => 'sg_PriceChange',
         'lastBuyDate' => 'sg_LastBuyDate',
@@ -70,27 +70,44 @@ class StockholderGift extends Entity
 
     public function formatForList(array $documentCombinations = []): array
     {
-        return [
-            'id' => $this->id,
-            'stockCode' => $this->stockCode,
-            'stockName' => $this->stockName,
-            'meetingDate' => $this->meetingDate,
-            'meetingType' => self::CODE_TABLES['meetingType'][$this->meetingType] ?? null,
+        $baseFormat = $this->baseFormat();
+
+        return array_merge($baseFormat, [
             'giftName' => $this->attributes['p_Name'] ?? null,
             'giftImage' => !empty($this->attributes['p_Image'])
                 ? base_url('uploads/gifts/' . $this->attributes['p_Image'])
                 : null,
-            'stockPrice' => $this->stockPrice,
-            'priceChange' => $this->priceChange,
+            'updateDate' => (new \DateTime($this->updatedAt))->format('Y-m-d'),
+            'documentCombinations' => $documentCombinations[$this->id] ?? []
+        ]);
+    }
+
+    public function formatForDetail(): array
+    {
+        $baseFormat = $this->baseFormat();
+
+        return array_merge($baseFormat, [
+            'giftStatus' => $this->giftStatus
+        ]);
+    }
+
+    private function baseFormat(): array
+    {
+        return [
+            'id' => $this->id,
+            'stockCode' => $this->stockCode,
+            'stockName' => $this->stockName,
+            'meetingType' => self::CODE_TABLES['meetingType'][$this->meetingType] ?? null,
+            'meetingDate' => $this->meetingDate,
             'lastBuyDate' => $this->lastBuyDate,
             'deadlineDate' => $this->deadlineDate,
+            'votingDateStart' => $this->votingDateStart,
+            'votingDateEnd' => $this->votingDateEnd,
             'marketType' => self::CODE_TABLES['marketType'][$this->marketType] ?? null,
             'serviceAgent' => $this->serviceAgent,
             'phone' => $this->phone,
-            'votingDateStart' => $this->votingDateStart,
-            'votingDateEnd' => $this->votingDateEnd,
-            'updateDate' => (new \DateTime($this->updatedAt))->format('Y-m-d'),
-            'documentCombinations' => $documentCombinations[$this->id] ?? []
+            'stockPrice' => $this->stockPrice,
+            'priceChange' => $this->priceChange,
         ];
     }
 }

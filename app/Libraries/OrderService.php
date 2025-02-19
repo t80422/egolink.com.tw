@@ -3,7 +3,9 @@
 namespace App\Libraries;
 
 use App\Entities\Order;
+use App\Entities\StockholderGift;
 use App\Models\OrderModel;
+use App\Models\DocumentModel;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use Exception;
 
@@ -12,6 +14,7 @@ class OrderService
     private $orderModel;
     private $uploadSer;
     private $docSer;
+    private $docModel;
 
     private const UPLOAD_DIR = 'votes';
 
@@ -20,6 +23,7 @@ class OrderService
         $this->orderModel = new OrderModel();
         $this->uploadSer = new UploadService();
         $this->docSer = new DocumentService();
+        $this->docModel = new DocumentModel();
     }
 
     public function handleVoteImgUpload(int $orderId, UploadedFile $img)
@@ -67,5 +71,33 @@ class OrderService
 
             throw $e;
         }
+    }
+
+    public function getConditions():array{
+        $options=[];
+
+        // 取得股東會相關選項
+        $codeTables = ['meetingType', 'marketType'];
+
+        foreach($codeTables as $type){
+            $options['moreCondition'][$type] = $this->formatCodeTableOptions(StockholderGift::CODE_TABLES[$type]);
+        }
+
+        // 取得訂單狀態選項
+        $options['orderStatus'] = $this->formatCodeTableOptions(Order::STATUS_NAMES);
+
+        // 取得繳交項目
+        $options['documents']= $this->docSer->getOptions();
+
+        return $options;
+    }
+
+    private function formatCodeTableOptions(array $codeTables):array{
+        return array_map(function($code, $name){
+            return [
+                'value' => $code,
+                'label' => $name
+            ];
+        }, array_keys($codeTables), array_values($codeTables));
     }
 }

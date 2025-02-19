@@ -4,6 +4,7 @@ namespace App\Libraries;
 
 use App\Models\DocumentModel;
 use App\Models\SubAccountModel;
+use App\Entities\Document;
 
 class DocumentService
 {
@@ -72,5 +73,14 @@ class DocumentService
         }
 
         return empty($requiredDocs);
+    }
+
+    public function getOptions(): array
+    {
+        $datas = $this->docModel->findAll();
+
+        return array_map(function (Document $data) {
+            return $data->formatForOption();
+        }, $datas);
     }
 }

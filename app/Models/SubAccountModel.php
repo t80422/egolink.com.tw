@@ -18,7 +18,8 @@ class SubAccountModel extends Model
         'sa_HIC',
         'sa_HRT',
         'sa_HC',
-        'sa_u_Id'
+        'sa_u_Id',
+        'sa_IdCardNum'
     ];
 
     protected $validationRules = [
@@ -67,7 +68,7 @@ class SubAccountModel extends Model
 
         // 分頁
         $page = empty($params['page']) ? 1 : $params['page'];
-        $limit = 20;
+        $limit = 1;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
             ->get()
