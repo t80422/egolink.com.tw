@@ -132,4 +132,23 @@ class ShipmentService
     {
         return $this->orderModel->getProductSummaryByUserId($userId,$page);
     }
+
+    /**
+     * 取得我的出貨單列表
+     *
+     * @param array $params
+     * @return array
+     */
+    public function getMyShipmentList(int $userId, array $params = []): array
+    {
+        $result = $this->shipmentModel->getShipmentList($userId, $params);
+        
+        if (isset($result['items']) && is_array($result['items'])) {
+            $result['items'] = array_map(function (Shipment $item) {
+                return $item->formatForList();
+            }, $result['items']);
+        }
+        
+        return $result;
+    }
 }

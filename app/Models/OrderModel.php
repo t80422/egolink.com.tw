@@ -162,7 +162,7 @@ class OrderModel extends Model
 
         // 分頁
         $page = empty($params['page']) ? 1 : $params['page'];
-        $limit = 1;
+        $limit = 20;
         $offset = ($page - 1) * $limit;
 
         $builder->limit($limit, $offset);
@@ -220,7 +220,7 @@ class OrderModel extends Model
                 'stockCode' => $order['sg_StockCode'],
                 'stockName' => $order['sg_StockName'],
                 'meetingDate' => $order['sg_MeetingDate'],
-                'meetingType' => StockholderGift::CODE_TABLES['meetingType'][$order['sg_MeetingType']],
+                'meetingType' => StockholderGift::CODE_TABLES['meetingType'][$order['sg_MeetingType']] ?? "",
                 'name' => $order['sa_Name'],
                 'status' => self::STATUS[$order['o_Status']],
                 'accountNum' => $order['o_AccountNum'],
@@ -313,8 +313,8 @@ class OrderModel extends Model
 
     public function getShippableUsers(array $params = []): array
     {
+        // 構建基礎查詢
         $builder = $this->db->table('users u')
-            ->select('DISTINCT u.u_Id, u.u_Name, u.u_Phone, l.l_Name', false)
             ->join('sub_accounts sa', 'sa.sa_u_Id = u.u_Id')
             ->join('orders o', 'o.o_sa_Id = sa.sa_Id')
             ->join('stockholder_gifts sg', 'sg.sg_Id = o.o_sg_Id')
@@ -342,16 +342,26 @@ class OrderModel extends Model
             $builder->where('o.o_Date <=', $params['endDate']);
         }
 
-        $total = $builder->countAllResults(false);
+        // 獲取總數時使用 DISTINCT 計數
+        $countBuilder = clone $builder;
+        $total = $countBuilder->select('COUNT(DISTINCT u.u_Id) as total', false)
+            ->get()
+            ->getRow()
+            ->total;
+
+        // 分頁處理
         $page = empty($params['page']) ? 1 : (int)$params['page'];
-        $limit = 1;
+        $limit = 20;
         $offset = ($page - 1) * $limit;
-        $items = $builder->limit($limit, $offset)
+
+        // 獲取實際數據 - 使用 DISTINCT
+        $items = $builder->select('DISTINCT u.u_Id, u.u_Name, u.u_Phone, l.l_Name', false)
+            ->limit($limit, $offset)
             ->get()
             ->getResult($this->returnType);
 
         return [
-            'total' => $total,
+            'total' => (int)$total,
             'page' => $page,
             'totalPages' => ceil($total / $limit),
             'items' => $items

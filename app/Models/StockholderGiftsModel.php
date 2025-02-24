@@ -28,7 +28,8 @@ class StockholderGiftsModel extends Model
         'sg_Phone',
         'sg_GiftStatus',
         'sg_VotingDateStart',
-        'sg_VotingDateEnd'
+        'sg_VotingDateEnd',
+        'sg_UpdatedAt'
     ];
 
     public function getList($params = [])

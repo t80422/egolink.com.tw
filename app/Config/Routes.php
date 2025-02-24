@@ -141,6 +141,12 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($
             $routes->put('(:num)', 'OrderController::edit/$1');
             $routes->delete('(:num)', 'OrderController::delete/$1');
         });
+
+        // 我的出貨單
+        $routes->group('myShipment', static function ($routes) {
+            $routes->get('/', 'ShipmentController::getMyShipmentList');
+            $routes->get('(:num)', 'ShipmentController::detail/$1');
+        });
     });
 
     // E股投路由

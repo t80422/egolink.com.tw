@@ -78,7 +78,9 @@ class StockholderGift extends Entity
                 ? base_url('uploads/gifts/' . $this->attributes['p_Image'])
                 : null,
             'updateDate' => (new \DateTime($this->updatedAt))->format('Y-m-d'),
-            'documentCombinations' => $documentCombinations[$this->id] ?? []
+            'documentCombinations' => $documentCombinations[$this->id] ?? [],
+            'meetingType' => self::CODE_TABLES['meetingType'][$this->meetingType] ?? null,
+            'marketType' => self::CODE_TABLES['marketType'][$this->marketType] ?? null,
         ]);
     }
 
@@ -97,13 +99,13 @@ class StockholderGift extends Entity
             'id' => $this->id,
             'stockCode' => $this->stockCode,
             'stockName' => $this->stockName,
-            'meetingType' => self::CODE_TABLES['meetingType'][$this->meetingType] ?? null,
+            'meetingType' => $this->meetingType,
             'meetingDate' => $this->meetingDate,
             'lastBuyDate' => $this->lastBuyDate,
             'deadlineDate' => $this->deadlineDate,
             'votingDateStart' => $this->votingDateStart,
             'votingDateEnd' => $this->votingDateEnd,
-            'marketType' => self::CODE_TABLES['marketType'][$this->marketType] ?? null,
+            'marketType' => $this->marketType,
             'serviceAgent' => $this->serviceAgent,
             'phone' => $this->phone,
             'stockPrice' => $this->stockPrice,

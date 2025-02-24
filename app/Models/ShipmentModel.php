@@ -86,7 +86,6 @@ class ShipmentModel extends Model
 
         // 分頁
         $page = empty($params['page']) ? 1 : (int)$params['page'];
-        log_message('debug', $page);
         $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
@@ -144,5 +143,61 @@ class ShipmentModel extends Model
                 'stock' => sprintf('%s %s', $item['stockCode'], $item['stockName'])
             ];
         }, $items);
+    }
+
+    public function getShipmentList(int $userId, array $params): array
+    {
+        $subQueryBuilder = $this->db->table('shipments s')
+            ->select('
+            s.s_Id,
+            s.s_Number,
+            s.s_Date,
+            MAX(o.o_Status) as status,
+            COUNT(DISTINCT o.o_sg_Id) as items,
+            COUNT(o.o_Id) as total
+        ')
+            ->join('orders o', 'o.o_s_Id=s.s_Id')
+            ->join('sub_accounts sa', 'sa.sa_Id=o.o_sa_Id')
+            ->join('users u', 'u.u_Id=sa.sa_u_Id')
+            ->where('u.u_Id', $userId)
+            ->groupBy('s.s_Id, s.s_Number, s.s_Date');
+
+        // 關鍵字
+        if (!empty($params['keyword'])) {
+            $keyword = $params['keyword'];
+            $subQueryBuilder->groupStart()
+                ->like('s.s_Number', $keyword)
+                ->orLike('u.u_Name', $keyword)
+                ->orLike('u.u_Phone', $keyword)
+                ->groupEnd();
+        }
+
+        // 年分
+        if (!empty($params['year'])) {
+            $subQueryBuilder->where('YEAR(s_Date)', $params['year']);
+        }
+
+        // 建立主查詢，使用子查詢結果
+        $subQuery = $subQueryBuilder->getCompiledSelect();
+        $builder = $this->db->table("({$subQuery}) as shipment_summary");
+
+        // 計算總筆數
+        $total = $builder->countAllResults(false);
+
+        // 分頁
+        $page = empty($params['page']) ? 1 : (int)$params['page'];
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $items = $builder->limit($limit, $offset)
+            ->get()
+            ->getResult($this->returnType);
+
+        return [
+            'page' => $page,
+            'totalPages' => ceil($total / $limit),
+            'total' => $total,
+            'items' => $items
+        ];
     }
 }

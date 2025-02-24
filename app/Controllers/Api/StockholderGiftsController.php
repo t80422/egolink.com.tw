@@ -101,23 +101,19 @@ class StockholderGiftsController extends BaseApiController
     public function edit($id = null)
     {
         try {
-            $this->sgModel->transStart();
+            // 獲取主要數據
+            $requestData = $this->request->getJSON(true);
 
-            $data = $this->getRequestData();
+            // 檢查是否包含文件組合數據
+            $combinations = $requestData['combinations'] ?? null;
 
-            $this->sgModel->update($id, $data);
-
-            $combinations = json_decode($this->request->getBody(), true)['documentCombinations'] ?? null;
-
-            if ($combinations !== null) {
-                $this->docModel->deleteCombinations($id);
-
-                if (!empty($combinations) && is_array($combinations)) {
-                    $this->docModel->createCombinations($id, $combinations);
-                }
+            // 移除不屬於 StockholderGift 模型的數據
+            if (isset($requestData['combinations'])) {
+                unset($requestData['combinations']);
             }
 
-            $this->sgModel->transComplete();
+            // 調用服務層方法進行更新
+            $this->sgSer->updateStockholderGift($id, $requestData, $combinations);
 
             return $this->successResponse('修改成功');
         } catch (\Exception $e) {
@@ -187,20 +183,20 @@ class StockholderGiftsController extends BaseApiController
     private function getRequestData()
     {
         return [
-            'sg_StockCode' => $this->request->getVar('stockCode'),
-            'sg_StockName' => $this->request->getVar('stockName'),
-            'sg_MeetingType' => $this->request->getVar('meetingType'),
-            'sg_MeetingDate' => $this->request->getVar('meetingDate'),
-            'sg_StockPrice' => $this->request->getVar('stockPrice'),
-            'sg_PriceChange' => $this->request->getVar('priceChange'),
-            'sg_LastBuyDate' => $this->request->getVar('lastBuyDate'),
-            'sg_DeadlineDate' => $this->request->getVar('deadlineDate'),
-            'sg_MarketType' => $this->request->getVar('marketType'),
-            'sg_ServiceAgent' => $this->request->getVar('serviceAgent'),
-            'sg_Phone' => $this->request->getVar('phone'),
-            'sg_Year' => $this->request->getVar('year'),
-            'sg_VotingDateStart' => $this->request->getVar('votingDateStart'),
-            'sg_VotingDateEnd' => $this->request->getVar('votingDateEnd'),
+            'stockCode' => $this->request->getVar('stockCode'),
+            'stockName' => $this->request->getVar('stockName'),
+            'meetingType' => $this->request->getVar('meetingType'),
+            'meetingDate' => $this->request->getVar('meetingDate'),
+            'stockPrice' => $this->request->getVar('stockPrice'),
+            'priceChange' => $this->request->getVar('priceChange'),
+            'lastBuyDate' => $this->request->getVar('lastBuyDate'),
+            'deadlineDate' => $this->request->getVar('deadlineDate'),
+            'marketType' => $this->request->getVar('marketType'),
+            'serviceAgent' => $this->request->getVar('serviceAgent'),
+            'phone' => $this->request->getVar('phone'),
+            'year' => $this->request->getVar('year'),
+            'votingDateStart' => $this->request->getVar('votingDateStart'),
+            'votingDateEnd' => $this->request->getVar('votingDateEnd'),
         ];
     }
 }

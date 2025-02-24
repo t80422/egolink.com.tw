@@ -68,7 +68,7 @@ class SubAccountModel extends Model
 
         // 分頁
         $page = empty($params['page']) ? 1 : $params['page'];
-        $limit = 1;
+        $limit = 20;
         $offset = ($page - 1) * $limit;
         $items = $builder->limit($limit, $offset)
             ->get()

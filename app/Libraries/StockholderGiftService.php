@@ -50,7 +50,7 @@ class StockholderGiftService
 
         $allCombinations = $this->docModel->getDocCombinsBySGIds([$id]);
         $result = $data->formatForDetail();
-        $result['documentCombinations'][] = $allCombinations[$id];
+        $result['documentCombinations'][] = $allCombinations[$id] ?? null;
 
         return $result;
     }
@@ -72,5 +72,43 @@ class StockholderGiftService
     public function getDocumentOptions(): array
     {
         return $this->docSer->getOptions();
+    }
+
+    public function updateStockholderGift(int $id, array $data, ?array $combinations = null): bool
+    {
+        $this->sgModel->transStart();
+
+        try {
+            $sgData = $this->sgModel->find($id);
+
+            if (!$sgData) {
+                throw new Exception('找不到對象');
+            }
+
+            $sgData->fill($data);
+            $sgData->updatedAt = date('Y-m-d H:i:s');
+
+            if (!$this->sgModel->update($id, $sgData)) {
+                $errors = $this->sgModel->errors();
+                throw new Exception('更新股東會資訊失敗: ' . implode(', ', $errors));
+            }
+
+            // 如果提供了文件組合資料，則處理文件組合
+            if ($combinations !== null) {
+                // 刪除舊的文件組合
+                $this->docModel->deleteCombinations($id);
+
+                // 如果有新的組合，創建它們
+                if (!empty($combinations) && is_array($combinations)) {
+                    $this->docModel->createCombinations($id, $combinations);
+                }
+            }
+
+            $this->sgModel->transComplete();
+            return true;
+        } catch (Exception $e) {
+            $this->sgModel->transRollback();
+            throw $e;
+        }
     }
 }

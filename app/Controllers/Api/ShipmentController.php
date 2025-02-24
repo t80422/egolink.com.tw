@@ -3,15 +3,18 @@
 namespace App\Controllers\Api;
 
 use App\Libraries\ShipmentService;
+use Config\Services;
 use Exception;
 
 class ShipmentController extends BaseApiController
 {
     private $shipmentSer;
+    private $authSer;
 
     public function __construct()
     {
         $this->shipmentSer = new ShipmentService();
+        $this->authSer=Services::auth();
     }
 
     // 新增
@@ -101,6 +104,20 @@ class ShipmentController extends BaseApiController
             return $this->successResponse('', $result);
         } catch (Exception $e) {
             return $this->errorResponse('取得用戶的委託紀念品統計錯誤', $e);
+        }
+    }
+
+    // 取得我的出貨單列表
+    public function getMyShipmentList()
+    {
+        try {
+            $params = $this->request->getGet();
+            $userId=$this->authSer->getUser()->id;   
+            $result = $this->shipmentSer->getMyShipmentList((int)$userId,$params);
+
+            return $this->successResponse('', $result);
+        } catch (Exception $e) {
+            return $this->errorResponse('取得我的出貨單列表時發生錯誤', $e);
         }
     }
 }
